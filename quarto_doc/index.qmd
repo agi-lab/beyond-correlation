@@ -1,0 +1,111 @@
+---
+title: quarto_doc
+authors:
+  - name: Katrien Antonio
+  - name: Benjamin Avanzi
+    affiliation: The University of Melbourne
+  - name: Ho Ming Lee
+    affiliation: The University of Melbourne
+    corresponding: true
+  - name: Bernard Wong
+  - name: Rui Zhou
+  - name: Pierre 
+  - name: Guillaume
+bibliography: references.bib
+format: pdf
+engine: knitr
+---
+
+# Section
+This is a simple placeholder for the manuscript's main document [@knuth84].
+
+```{r, echo = FALSE}
+library(reticulate)
+use_virtualenv("~/Coding/GitHub/beyond-correlation/.venv", required = TRUE)
+py_require(c("ipykernel<7", "plotnine"))
+
+library(ggplot2)
+```
+
+
+```{python}
+#| label: load-packages
+#| include: false
+from plotnine import *
+from plotnine.data import penguins
+```
+
+## Pitfalls
+### Uncorrelated not equal to independence
+```{r, birth_vs_death_rate_hellcor}
+# install.packages("ggplot2")
+# install.packages("HellCor")
+library(HellCor)
+library(ggplot2)
+library(patchwork)
+
+data("worlddemographics")
+
+worlddemographics_rank <- worlddemographics |>
+  transform(
+    FDeath = rank(Death.Rate.Pop) / (nrow(worlddemographics) + 1),
+    FBirth = rank(Birth.Rate.Pop) / (nrow(worlddemographics) + 1)
+  )
+
+p1 <- ggplot(worlddemographics, aes(x = Death.Rate.Pop, y = Birth.Rate.Pop)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Death rate per 1000 individuals",
+    y = "Birth rate per 1000 individuals"
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(worlddemographics_rank, aes(x = FDeath, y = FBirth)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Rank of death rate per 1000 individuals",
+    y = "Rank of birth rate per 1000 individuals"
+  ) +
+  theme_minimal()
+
+p1 + p2
+
+# ggsave(
+#   filename = "saved_fig/birthvdeath.png",
+#   plot = p1 + p2,
+#   width = 10,
+#   height = 4
+# )
+```
+
+### Correlation is inherently pairwise and cannot detect higher-order dependence
+```{r, multi_line_example}
+set.seed(123)
+n <- 5000
+
+U1 <- runif(n)
+U2 <- runif(n)
+U3 <- runif(n)
+
+C <- (U1 + U2) %% 1
+
+X1 <- qgamma(U1, shape = 2.5, scale = 2000)
+X2 <- qgamma(U2, shape = 3.0, scale = 3000)
+
+Y <- qgamma(C, shape = 2.2, scale = 2500)
+
+p <- 0.50
+R <- rbinom(n, size = 1, prob = p)
+
+W <- ifelse(R == 1, C, 1 - C)
+
+X3 <- qgamma(W, shape = 2.0, scale = 1200)
+
+dat <- data.frame(X1,X2,X3,Y)
+```
+
+```{r}
+cor(dat$X3, dat$Y)
+```
