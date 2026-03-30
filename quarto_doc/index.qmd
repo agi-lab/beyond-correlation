@@ -80,6 +80,16 @@ p1 + p2
 # )
 ```
 
+```{r}
+library(dcov)
+
+set.seed(123)
+HellCor::HellCor(worlddemographics$Birth.Rate.Pop, worlddemographics$Death.Rate.Pop, pval.comp = TRUE)
+
+set.seed(123)
+dcov::dcor.test(worlddemographics$Birth.Rate.Pop, worlddemographics$Death.Rate.Pop)
+```
+
 ### Correlation is inherently pairwise and cannot detect higher-order dependence
 ```{r, multi_line_example}
 set.seed(123)
@@ -108,4 +118,57 @@ dat <- data.frame(X1,X2,X3,Y)
 
 ```{r}
 cor(dat$X3, dat$Y)
+dcov::dcor(cbind(dat$X1,dat$X2),Y)
+
+set.seed(123)
+dcov::dcor.test(cbind(dat$X1,dat$X2),Y)
+```
+
+## Multivariate
+
+## Time series
+
+```{r}
+library(quantmod)
+
+getSymbols("^GSPC", src = "yahoo", from = "1926-01-01")
+price <- Cl(GSPC)
+ret <- monthlyReturn(price, type = "log")
+
+adf.test(ret)
+```
+
+
+```{r}
+library(dCovTS)
+library(vars)
+library(urca)
+
+data(MortTempPart)
+
+x <- MortTempPart[, c("cmort", "tempr", "part")]
+x <- as.matrix(x)
+
+sel <- VARselect(x, lag.max = 10, type = "const")
+sel$criteria
+sel$selection
+
+fit_var <- VAR(x, p = 2, type = "const")
+summary(fit_var)
+
+E <- residuals(fit_var)
+
+
+```
+
+```{r}
+# install.packages("tseries")
+library(tseries)
+cmort_ts <- ts(MortTempPart$cmort) 
+tempr_ts <- ts(MortTempPart$tempr) 
+part_ts <- ts(MortTempPart$part) 
+
+adf.test(cmort_ts)
+adf.test(tempr_ts)
+adf.test(part_ts)
 ```
