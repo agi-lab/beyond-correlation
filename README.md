@@ -1,3 +1,1 @@
- 
-
-[View the rendered html](https://agi-lab.github.io/beyond-correlation/)
+[View the rendered HTML](https://agi-lab.github.io/beyond-correlation/)
