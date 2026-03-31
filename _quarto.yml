@@ -1,0 +1,17 @@
+project:
+  type: website
+  output-dir: docs
+
+website:
+  title: "Beyond pairwise correlation"
+
+format:
+  html:
+    code-fold: false
+    number-sections: true
+
+execute:
+  echo: true
+
+
+
