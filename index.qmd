@@ -17,16 +17,7 @@ authors:
   - name: Rui Zhou
     affiliation: Centre for Actuarial Studies, Department of Economics, University of Melbourne, Australia
 bibliography: references.bib
-format: 
-  html:
-    code-fold: false
-    number-sections: true
-execute:
-  echo: true
-engine: knitr
 ---
-
-
 ```{r, echo = FALSE, output = FALSE}
 # Loading required libraries
 library(ggplot2)
@@ -967,4 +958,5 @@ acf(E[, "part"],  lag.max = 20, main = "ACF of VAR residuals: part")
 
 mADCFplot(E, MaxLag = 10)
 ```
+
 
