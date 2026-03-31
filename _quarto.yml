@@ -1,17 +1,16 @@
 project:
-  type: website
+  type: manuscript
   output-dir: docs
 
-website:
-  title: "Beyond pairwise correlation"
+manuscript:
+  article: index.qmd
 
 format:
   html:
-    code-fold: false
-    number-sections: true
+    comments:
+      hypothesis: true
+  docx: default
+  jats: default
 
 execute:
-  echo: true
-
-
-
+  freeze: true
