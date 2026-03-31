@@ -1,0 +1,971 @@
+---
+title: "Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics"
+authors:
+  - name: Benjamin Avanzi
+    affiliation: Centre for Actuarial Studies, Department of Economics, University of Melbourne, Australia
+  - name: Guillaume Boglioni Beaulieu
+    affiliation: School of Risk and Actuarial Studies, University of New South Wales, Sydney, NSW 2052, Australia
+  - name: Pierre Lafaye de Micheaux
+    affiliation: School of Mathematics and Statistics, University of New South Wales, Sydney, NSW 2052, Australia
+  - name: Ho Ming Lee
+    affiliation: 
+      - Centre for Actuarial Studies, Department of Economics, University of Melbourne, Australia
+      - Faculty of Economics and Business, KU Leuven, Belgium
+    corresponding: true
+  - name: Bernard Wong
+    affiliation: School of Risk and Actuarial Studies, University of New South Wales, Sydney, NSW 2052, Australia
+  - name: Rui Zhou
+    affiliation: Centre for Actuarial Studies, Department of Economics, University of Melbourne, Australia
+bibliography: references.bib
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    df_print: paged
+
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r, echo = FALSE, output = FALSE}
+# Loading required libraries
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(TOSTER)
+library(plotly)
+library(copula)
+library(latex2exp)
+library(pdist)
+library(quantmod)
+library(tseries)
+library(vars)
+library(urca)
+library(HellCor)
+```
+
+# Introduction
+This is the code for the paper ``Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics" by Benjamin Avanzi, Guillaume Boglioni Beaulieu, Pierre Lafaye de Micheaux, Ho Ming Lee, Bernard Wong, and Rui Zhou.
+
+# Motivating examples
+This section provide the codes for generating the figures and statistics in the introduction of the paper, as well as the data generation process for simulated data.
+
+## 2020 birth and death rates
+Our first motivating example involves the birth and death rate data from different countries in the first trimester of 2020 [@CIA_WorldFactbook_worlddemographics]. This example is to illustrate that correlations are inherently for linear and monotonic relationships and hence a 0 correlation does not mean independence, and a small value does not necessarily means the actual dependence relationship is weak.
+
+The birth and death rates are measured as the numbers of births and deaths per 1000 individuals, respectively, across 229 countries. The data can be loaded through the `HellCor` package in `R`.
+```{r, birth_vs_death_rate_plot}
+# Load birth vs death rate data
+data("worlddemographics")
+
+# Transform the data into ranks
+worlddemographics_rank <- worlddemographics |>
+  transform(
+    FDeath = rank(Death.Rate.Pop) / (nrow(worlddemographics) + 1),
+    FBirth = rank(Birth.Rate.Pop) / (nrow(worlddemographics) + 1)
+  )
+
+# Plotting both the raw data (p1) and the ranks (p2) out
+p1 <- ggplot(worlddemographics, aes(x = Death.Rate.Pop, y = Birth.Rate.Pop)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Death rate per 1000 individuals",
+    y = "Birth rate per 1000 individuals"
+  ) +
+  theme_minimal()
+
+p2 <- ggplot(worlddemographics_rank, aes(x = FDeath, y = FBirth)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "Rank of death rate per 1000 individuals",
+    y = "Rank of birth rate per 1000 individuals"
+  ) +
+  theme_minimal()
+
+p1 + p2
+```
+
+The corresponding correlation coefficients, and the corresponding $p$-values with the null hypothesis 
+$$
+\begin{aligned}
+H_0 &: \theta=0,\\
+H_1 &: \theta\neq0,
+\end{aligned}
+$$
+for $\theta\in\{r \text{ (Pearson)}, \rho \text{ (Spearman)}, \tau \text{ (Kendall)}\}$ are given by
+```{r, birthvdeath_compute_corr, warning = FALSE}
+# Getting raw data for birth and death
+birth_raw <- worlddemographics$Birth.Rate.Pop
+death_raw <- worlddemographics$Death.Rate.Pop
+
+set.seed(123) # This is for bootstrap test for correlation
+cor_matrix_birth_death <- rbind(
+  correlation = c(
+    cor.test(birth_raw, death_raw, method = "pearson")$estimate,
+    cor.test(birth_raw, death_raw, method = "spearman")$estimate,
+    cor.test(birth_raw, death_raw, method = "kendall")$estimate
+  ),
+  p_value = c(
+    # p-val for Pearson's corr needs boostrap here
+    # As the null of the t-test assumed bivariate normal,
+    # which is not necessarily true in this case.
+    TOSTER::boot_cor_test(birth_raw, death_raw)$p.value, 
+    cor.test(birth_raw, death_raw, method = "spearman")$p.value,
+    cor.test(birth_raw, death_raw, method = "kendall")$p.value
+  )
+)
+
+colnames(cor_matrix_birth_death) <- c("Pearson", "Spearman", "Kendall")
+cor_matrix_birth_death
+```
+
+## Multi-line example
+The other example is used to illustrate that the correlation is inherently pairwise, and it cannot detect association when the underlying association exist when they considered jointly. For this example, there are two business lines where we have the motor line with the following components:
+\begin{equation*}
+      \mathbf{X}=(X_1,X_2,X_3)=\text{(vehicle repair cost, bodily injury liability, claims handling cost)},
+\end{equation*}
+and $Y$ denotes the medical claim cost recorded under another line of business. The data is simulated using the following code
+```{r, multi_line_data_generation}
+set.seed(123)
+n <- 5000
+
+U1 <- runif(n) # latent for vehicle repair
+U2 <- runif(n) # latent for bodily injury liability
+U3 <- runif(n) # latent for claims handling
+
+# latent for medical claims - it depends on both 
+# vehicle damage and bodily injury
+C <- (U1 + U2) %% 1 
+
+# Independently distributed in Gamma
+X1 <- qgamma(U1, shape = 2.5, scale = 2000)
+X2 <- qgamma(U2, shape = 3.0, scale = 3000)
+
+# Gamma as well, but dependends on (X1, X2)
+Y <- qgamma(C, shape = 2.2, scale = 2500)
+
+# Here we have claims handling cost, and there are two types of claim:
+# Severity driven: handling cost goes up with medical cost (C)
+# Review driven: handling cost higher for smaller medical cost (1-C)
+p <- 0.50
+R <- rbinom(n, size = 1, prob = p)
+W <- ifelse(R == 1, C, 1 - C)
+
+X3 <- qgamma(W, shape = 2.0, scale = 1200)
+
+multi_line_dat <- data.frame(X1,X2,X3,Y)
+```
+Below we apply some exploratory data analysis. First, we look at the distribution of each of the claim costs. As expected, all of the shape looks like a $\Gamma$-distribution:
+```{r, multi_line_univariate_plots}
+par(mfrow = c(2,3))
+
+# Histogram for each of the claim costs
+hist(multi_line_dat$X1, main = "X1: Vehicle damage", xlab = "Loss", col = "grey")
+hist(multi_line_dat$X2, main = "X2: Bodily injury", xlab = "Loss", col = "grey")
+hist(multi_line_dat$X3, main = "X3: Claims handling", xlab = "Loss", col = "grey")
+hist(multi_line_dat$Y, main = "Y: Medical claim", xlab = "Loss", col = "grey")
+
+# Boxplot for log claim components
+boxplot(log(multi_line_dat[, c("X1","X2","X3","Y")]),
+        main = "Log-scale boxplots of claim components")
+```
+Then, we apply bivariate analysis. First, we plot the scatter plots for each pair of the variables using their ranks. Here ranks are used to reveal the dependence structure between the pairs.
+```{r, multi_line_cross_plot}
+# plot the scatterplots on the ranks for each claim variable
+par(mfrow = c(2,2))
+col_group <- ifelse(R == 1, "red", "blue")
+plot(rank(multi_line_dat$X1), rank(multi_line_dat$Y), pch = 16, cex = 0.35,
+     xlab = "Rank of X1", ylab = "Rank of Y",
+     main = "Medical claim (Y) vs vehicle damage (X1)")
+
+plot(rank(multi_line_dat$X2), rank(multi_line_dat$Y), pch = 16, cex = 0.35,
+     xlab = "Rank of X2", ylab = "Rank of Y",
+     main = "Medical claim (Y) vs bodily injury (X2)")
+
+plot(rank(multi_line_dat$X2), rank(multi_line_dat$X3), pch = 16, cex = 0.35,
+     xlab = "Rank of X2", ylab = "Rank of X3",
+     main = "Bodily injury (X2) vs vehicle damage (X2)")
+
+plot(rank(multi_line_dat$X3), rank(multi_line_dat$Y), pch = 16, cex = 0.35,
+     col = col_group, xlab = "Rank of X1", ylab = "Rank of Y",
+     main = "Medical claim (Y) vs claims handling (X3)")
+```
+The correlation and the corresponding $p$-value matrices are given by below:
+```{r, corr_p_helper_function}
+get_pmat_corr <- function(dat, method = c("pearson", "spearman", "kendall"),
+                          R = 9999) {
+  # This function is used to get the p-values for testing correlation significance
+  # Input: a dataframe with all numerical columns
+  # output: p-value matrix of the choice of correlation
+  method <- match.arg(method)
+  
+  dat <- as.data.frame(dat)
+  pmat <- matrix(NA_real_, ncol(dat), ncol(dat))
+  colnames(pmat) <- rownames(pmat) <- colnames(dat)
+  
+  for (i in 1:(ncol(dat) - 1)) {
+    for (j in (i + 1):ncol(dat)) {
+      x <- dat[[i]]
+      y <- dat[[j]]
+      
+      keep <- complete.cases(x, y)
+      x <- x[keep]
+      y <- y[keep]
+      
+      pval <- if (method == "pearson") {
+        TOSTER::boot_cor_test(x, y, method = "pearson", null = 0, alternative = "two.sided", R = R)$p.value
+      } else {
+        cor.test(x, y, method = method)$p.value
+      }
+      
+      pmat[i, j] <- pval
+      pmat[j, i] <- pval
+    }
+  }
+  
+  diag(pmat) <- NA
+  pmat
+}
+```
+```{r, multi_line_corr}
+cor(multi_line_dat) # Pearson correlation
+get_pmat_corr(multi_line_dat, method = "pearson")
+
+cor(multi_line_dat, method = "spearman") # Spearman correlation
+get_pmat_corr(multi_line_dat, method = "spearman")
+
+cor(multi_line_dat, method = "kendall") # Kendall correlation
+get_pmat_corr(multi_line_dat, method = "kendall")
+```
+Here, as we can see the pairs $(X_1,X_2)$, $(X_1,Y)$, and $(X_2,Y)$ does not show any obvious pattern, suggesting independence. However, when we look at the scatter plot between $(X_1,X_2)$ coloured by $Y$, we can see that the value of $Y$ forms a diganoal pattern, i.e. knowing the value of $(X_1,X_2)$ provide information of $Y$, suggesting that they are not mutually independent. This raise one of the pitfall that correlation, and in general, thinking in pairwise dependence, can miss strutures where the dependence is considered jointly.
+```{r, multi_line_X1X2Y_scatter}
+# build eCDF for the multi-line data
+multi_line_ECDF <- multi_line_dat %>%
+  mutate(
+    FX1 = rank(X1) / n(),
+    FX2 = rank(X2) / n(),
+    FX3 = rank(X3) / n(),
+    FY = rank(Y) / n()
+  )
+
+ggplot(multi_line_ECDF, aes(x = FX1, y = FX2, colour = FY)) + 
+  geom_point(size = 1.2, alpha = 0.8) + 
+  scale_colour_gradient2(
+    low = "blue",
+    mid = "grey90",
+    high = "red",
+    midpoint = 0.5,
+    name = expression(hat(F)[Y](Y))
+  ) +
+  labs(
+    x = expression(hat(F)[X[1]](X[1])),
+    y = expression(hat(F)[X[2]](X[2]))
+  ) + 
+  theme_minimal()
+```
+```{r, multi_line_X1X2Y_3D}
+# get pseudo-observations of the data (i.e. eCDF)
+pseudo_obs <- function(x) {
+  rank(x, ties.method = "average", na.last = "keep") / (sum(!is.na(x)) + 1)
+}
+
+# Map concentration of points to [0,1]
+# 0 = blue, 0.5 = white, 1 = red
+mid_rescale <- function(x, low, mid, high) {
+  out <- numeric(length(x))
+
+  left  <- x <= mid
+  right <- x > mid
+
+  out[left]  <- 0.5 * (x[left]  - low) / (mid - low)
+  out[right] <- 0.5 + 0.5 * (x[right] - mid) / (high - mid)
+
+  out[!is.finite(out)] <- 0.5
+  pmin(pmax(out, 0), 1)
+}
+
+# compute the concentration at each point
+build_concentration_scores <- function(dat,
+                                       x_col = "X1",
+                                       y_col = "X2",
+                                       z_col = "Y",
+                                       r = NULL,
+                                       scale = c("absolute", "relative")) {
+  scale <- match.arg(scale)
+
+  df <- dat %>%
+    dplyr::select(all_of(c(x_col, y_col, z_col))) %>%
+    na.omit()
+
+  names(df) <- c("x", "y", "z")
+
+  U <- df %>%
+    dplyr::mutate(
+      u1 = pseudo_obs(x),
+      u2 = pseudo_obs(y),
+      u3 = pseudo_obs(z)
+    )
+
+  Umat <- as.matrix(U[, c("u1", "u2", "u3")])
+  n <- nrow(Umat)
+
+  if (is.null(r)) {
+    r <- 0.61 * n^(-0.18)
+  }
+
+  # pairwise Euclidean distances in pseudo-observation space
+  D <- as.matrix(dist(Umat))
+  diag(D) <- NA_real_
+
+  # Step 1: raw local mass inside radius r
+  h_raw <- rowMeans(D <= r, na.rm = TRUE)
+
+  # Step 2: inverse-distance weighted smoothing
+  h_hat <- vapply(seq_len(n), function(i) {
+    nbr <- which(D[i, ] <= r)
+
+    if (length(nbr) == 0) {
+      return(h_raw[i])
+    }
+
+    d <- D[i, nbr]
+    d[d == 0] <- min(d[d > 0], na.rm = TRUE)
+    if (!any(is.finite(d))) {
+      return(h_raw[i])
+    }
+
+    w <- 1 / d
+    sum(w * h_raw[nbr]) / sum(w)
+  }, numeric(1))
+
+  # independence benchmark for a 3D ball
+  h0 <- 4 * pi * r^3 / 3
+
+  if (scale == "absolute") {
+    low  <- 0
+    high <- 2 * r / sqrt(3)
+  } else {
+    low  <- min(h_hat)
+    high <- max(h_hat)
+    if (low == high) {
+      low  <- low - 1e-8
+      high <- high + 1e-8
+    }
+  }
+
+  score <- mid_rescale(h_hat, low = low, mid = h0, high = high)
+
+  U %>%
+    mutate(
+      h_raw = h_raw,
+      h_hat = h_hat,
+      colour_score = score,
+      radius = r
+    )
+}
+
+# 3D plot: U1, U2, Y
+plot_3d <- function(scored_df) {
+  plot_ly(
+    data = scored_df,
+    x = ~u1, y = ~u2, z = ~u3,
+    type = "scatter3d",
+    mode = "markers",
+    marker = list(
+      size = 3,
+      color = ~colour_score,
+      cmin = 0,
+      cmax = 1,
+      colorscale = list(
+        c(0.0, "blue"),
+        c(0.5, "whitesmoke"),
+        c(1.0, "red")
+      ),
+      showscale = TRUE,
+      colorbar = list(title = "Concentration")
+    )
+  ) %>%
+    layout(
+      scene = list(
+        xaxis = list(title = list(text = "F<sub>X1</sub>(X1)")),
+        yaxis = list(title = list(text = "F<sub>X2</sub>(X2)")),
+        zaxis = list(title = list(text = "F<sub>Y</sub>(Y)"))
+      )
+    )
+}
+
+# run code on multi-line data
+scores_X1X2Y <- build_concentration_scores(
+  dat   = multi_line_dat,
+  x_col = "X1",
+  y_col = "X2",
+  z_col = "Y",
+  scale = "absolute"
+)
+
+plot_3d(scores_X1X2Y)
+```
+
+## Failure of CLT
+Another important implication of relying on pairwise dependence statistics is that, many of the actuarial modelling assumption relies on the assumption that the random variables are (mutually) independent and identically distributed. It is possible to construct a sequence of identical and pairwise independent random variables but not mutually independent. However, this cannot be detected through bivariate dependence statistics such as the correlation. And it is possible that the central limit theorem (CLT) fails for such a sequence of random variables.
+
+As illustrated by @avanzi2021counterexample and @beaulieu2021counterexamples, pairwise independence alone does not guarantee asymptotic normality. They construct a sequence $X_1,\ldots,X_n$ of pairwise independent, but not mutually independent, standard normal random variables such that the limiting distribution of
+  \begin{equation}
+      \sqrt{n}\,\frac{1}{n}\sum_{i=1}^n X_i
+  \end{equation}
+  coincides with that of the random variable
+  \begin{equation}\label{eq:limit_dist}
+      S=\sqrt{1-r^2}\,Z+r\chi,
+  \end{equation}
+where $Z\sim N(0,1)$, $\chi$ is a standardised chi-squared random variable independent of $Z$, and $0<r^2<1$. The limiting distribution does not necessarily converge to the normal distribution, as the CLT suggests.
+
+```{r, failure_CLT}
+set.seed(123)
+
+# standardised chi-squared distribution with df = 1
+rchi_std <- function(n){
+  (rchisq(n, df = 1)-1)/sqrt(2)
+}
+
+# Limiting distribution
+rS <- function(n, r){
+  sqrt(1 - r^2) * rnorm(n) + r * rchi_std(n)
+}
+
+r_vals <- c(0.6, 0.8, 0.95)
+n <- 300000
+x_grid <- seq(-4, 8, length.out = 1000)
+
+samples <- lapply(r_vals, function(r) rS(n, r))
+densities <- lapply(samples, density,
+                    from = min(x_grid), to = max(x_grid),
+                    n = 1000)
+
+ymax <- max(
+  sapply(densities, function(d) max(d$y)),
+  max(dnorm(x_grid))
+)
+ymax <- 1.08 * ymax
+
+par(mfrow = c(1,2), mar = c(5,5,3,1))
+
+# plot PDF 
+plot(densities[[1]], type = "l", lwd = 2, col = 2,
+     main = "PDF", xlab = "x", ylab = "",
+     xlim = range(x_grid), ylim = c(0, ymax))
+
+for (i in 2:length(densities)) {
+  lines(densities[[i]], lwd = 2, col = i + 1, lty = i)
+}
+lines(x_grid, dnorm(x_grid), lwd = 2, col = 1)
+
+legend("topright",
+       legend = c(paste0("r = ", r_vals), "N(0,1)"),
+       col = c(2, 3, 4, 1),
+       lty = c(1, 2, 3, 1),
+       lwd = 2,
+       bty = "n")
+
+# plot CDF 
+plot(x_grid, ecdf(samples[[1]])(x_grid), type = "l", lwd = 2, col = 2,
+     main = "CDF", xlab = "x", ylab = "",
+     xlim = range(x_grid), ylim = c(0, 1))
+
+for (i in 2:length(samples)) {
+  lines(x_grid, ecdf(samples[[i]])(x_grid),
+        lwd = 2, col = i + 1, lty = i)
+}
+lines(x_grid, pnorm(x_grid), lwd = 2, col = 1)
+
+legend("bottomright",
+       legend = c(paste0("r = ", r_vals), "N(0,1)"),
+       col = c(2, 3, 4, 1),
+       lty = c(1, 2, 3, 1),
+       lwd = 2,
+       bty = "n")
+```
+
+# Illustrations
+Now in this section we illustrate how the distance-based dependence statistics can be computed through `R`.
+
+## Illustrations using Hellinger correlation
+```{r}
+library(HellCor) # this library is used to compute the Hellinger correlation
+```
+The first distance-based dependence statistic introduced is called the Hellinger correlation. Intuitively it measures the difference between the copula density between the two (continuous univariate) variables and the independence copula density.
+```{r, hellcor_intuition}
+n <- 55
+eps <- 0.02
+u <- seq(eps, 1 - eps, length.out = n)
+v <- seq(eps, 1 - eps, length.out = n)
+grid <- expand.grid(u = u, v = v)
+
+# Independence density
+z_indep <- matrix(1, nrow = n, ncol = n)
+
+# Clayton copula density
+theta <- 5
+cop_clayton <- claytonCopula(param = theta, dim = 2)
+z_clayton <- matrix(
+  dCopula(as.matrix(grid), copula = cop_clayton),
+  nrow = n, ncol = n
+)
+z_sqrt <- sqrt(z_clayton)
+
+# Helper: build closed mesh for the gap
+# between z_low and z_high
+make_gap_mesh <- function(u, v, z_low, z_high) {
+  nu <- length(u)
+  nv <- length(v)
+  
+  # vertex indexing (0-based for plotly mesh3d)
+  idx_top <- function(i, j) (j - 1) * nu + i - 1
+  idx_bot <- function(i, j) nu * nv + (j - 1) * nu + i - 1
+  
+  # vertices
+  xg <- rep(u, times = nv)
+  yg <- rep(v, each = nu)
+  
+  x <- c(xg, xg)
+  y <- c(yg, yg)
+  z <- c(as.vector(z_high), as.vector(z_low))
+  
+  ii <- integer(0)
+  jj <- integer(0)
+  kk <- integer(0)
+  
+  add_tri <- function(a, b, c) {
+    ii <<- c(ii, a)
+    jj <<- c(jj, b)
+    kk <<- c(kk, c)
+  }
+  
+  # top and bottom faces
+  for (i in 1:(nu - 1)) {
+    for (j in 1:(nv - 1)) {
+      # top
+      a <- idx_top(i, j)
+      b <- idx_top(i + 1, j)
+      c <- idx_top(i, j + 1)
+      d <- idx_top(i + 1, j + 1)
+      add_tri(a, b, c)
+      add_tri(b, d, c)
+      
+      # bottom (reverse orientation)
+      a2 <- idx_bot(i, j)
+      b2 <- idx_bot(i + 1, j)
+      c2 <- idx_bot(i, j + 1)
+      d2 <- idx_bot(i + 1, j + 1)
+      add_tri(a2, c2, b2)
+      add_tri(b2, c2, d2)
+    }
+  }
+  
+  # wall at v = min(v)
+  for (i in 1:(nu - 1)) {
+    t1 <- idx_top(i, 1)
+    t2 <- idx_top(i + 1, 1)
+    b1 <- idx_bot(i, 1)
+    b2 <- idx_bot(i + 1, 1)
+    add_tri(t1, b1, t2)
+    add_tri(t2, b1, b2)
+  }
+  
+  # wall at v = max(v)
+  for (i in 1:(nu - 1)) {
+    t1 <- idx_top(i, nv)
+    t2 <- idx_top(i + 1, nv)
+    b1 <- idx_bot(i, nv)
+    b2 <- idx_bot(i + 1, nv)
+    add_tri(t1, t2, b1)
+    add_tri(t2, b2, b1)
+  }
+  
+  # wall at u = min(u)
+  for (j in 1:(nv - 1)) {
+    t1 <- idx_top(1, j)
+    t2 <- idx_top(1, j + 1)
+    b1 <- idx_bot(1, j)
+    b2 <- idx_bot(1, j + 1)
+    add_tri(t1, t2, b1)
+    add_tri(t2, b2, b1)
+  }
+  
+  # wall at u = max(u)
+  for (j in 1:(nv - 1)) {
+    t1 <- idx_top(nu, j)
+    t2 <- idx_top(nu, j + 1)
+    b1 <- idx_bot(nu, j)
+    b2 <- idx_bot(nu, j + 1)
+    add_tri(t1, b1, t2)
+    add_tri(t2, b1, b2)
+  }
+  
+  list(x = x, y = y, z = z, i = ii, j = jj, k = kk)
+}
+
+gap_mesh <- make_gap_mesh(u, v, z_indep, z_sqrt)
+
+surf_contours <- list(
+  x = list(show = TRUE, color = "black", width = 1),
+  y = list(show = TRUE, color = "black", width = 1),
+  z = list(show = FALSE)
+)
+
+# Plot
+p <- plot_ly()
+
+# LEFT: independence copula
+p <- add_surface(
+  p,
+  x = ~u, y = ~v, z = ~z_indep,
+  scene = "scene",
+  colorscale = list(c(0, 1), c("tomato", "tomato")),
+  showscale = FALSE,
+  opacity = 1,
+  contours = surf_contours,
+  name = "Independence density"
+)
+
+p <- add_surface(
+  p,
+  x = ~u, y = ~v, z = ~z_indep,
+  scene = "scene",
+  colorscale = list(c(0, 1), c("royalblue", "royalblue")),
+  showscale = FALSE,
+  opacity = 1,
+  contours = surf_contours,
+  name = "sqrt(c(u,v))"
+)
+
+# RIGHT: gray filled gap first
+p <- add_trace(
+  p,
+  type = "mesh3d",
+  x = gap_mesh$x,
+  y = gap_mesh$y,
+  z = gap_mesh$z,
+  i = gap_mesh$i,
+  j = gap_mesh$j,
+  k = gap_mesh$k,
+  scene = "scene2",
+  color = "gray70",
+  opacity = 0.8,
+  flatshading = TRUE,
+  hoverinfo = "skip",
+  showlegend = FALSE
+)
+
+# RIGHT: red independence surface
+p <- add_surface(
+  p,
+  x = ~u, y = ~v, z = ~z_indep,
+  scene = "scene2",
+  colorscale = list(c(0, 1), c("tomato", "tomato")),
+  showscale = FALSE,
+  opacity = 1,
+  contours = surf_contours
+)
+
+# RIGHT: blue sqrt Clayton density
+p <- add_surface(
+  p,
+  x = ~u, y = ~v, z = ~z_sqrt,
+  scene = "scene2",
+  colorscale = list(c(0, 1), c("royalblue", "royalblue")),
+  showscale = FALSE,
+  opacity = 1,
+  contours = surf_contours
+)
+
+p <- layout(
+  p,
+  showlegend = FALSE,
+  scene = list(
+    domain = list(x = c(0.00, 0.48), y = c(0, 1)),
+    xaxis = list(title = "u"),
+    yaxis = list(title = "v"),
+    zaxis = list(title = "density", range = c(0, 6)),
+    camera = list(eye = list(x = 1.6, y = 1.6, z = 0.9))
+  ),
+  scene2 = list(
+    domain = list(x = c(0.52, 1.00), y = c(0, 1)),
+    xaxis = list(title = "u"),
+    yaxis = list(title = "v"),
+    zaxis = list(title = "density", range = c(0, 6)),
+    camera = list(eye = list(x = 1.6, y = 1.6, z = 0.9))
+  )
+)
+
+p
+```
+
+### 2020 birth and death rates
+```{r, birthdeath_hellcor}
+# Compute Hellinger correlation between death and birth rates
+birthdeath_hellCor = HellCor(worlddemographics$Birth.Rate.Pop,
+                             worlddemographics$Death.Rate.Pop,
+                             pval.comp = TRUE)
+
+birthdeath_hellCor$Hcor # computed Hellinger correlation
+birthdeath_hellCor$p.value # p-value with H_0: HellCor = 0
+```
+
+### Multi-line example
+```{r, multi_line_hellcor}
+vars <- c("X1", "X2", "X3", "Y")
+
+# compute Hellinger correlaiton for each pair of the claim variables
+hc_mat <- outer(
+  vars, vars,
+  Vectorize(function(i, j) {
+    HellCor(multi_line_dat[[i]], multi_line_dat[[j]])$Hcor
+  })
+)
+
+dimnames(hc_mat) <- list(vars, vars)
+hc_mat
+```
+
+## Illustrations using distance covariance/correlation
+```{r}
+library(dcov) # for distance covariance computation
+# library(energy)
+# Alternative library available. However we use dcov
+# as it provides a fast implementation of dcov when
+# the two random variables are one-dimensional.
+```
+The next distance-based statistic is the distance covariance/distance correlation. It is computed by the distance between the joint and product of marginal charateristic functions between two random variables. We illustrate the intuition of distance covariance using the characteristic function between two normal distributions.
+```{r, dcor_intuition, warning = FALSE}
+t0 <- 1 # here t is fixed
+s_grid <- seq(-4, 4, length.out = 500)
+
+# joint charateristic function
+phi_joint <- function(s, t, rho) {
+  exp(-0.5 * (s^2 + t^2 + 2 * rho * s * t))
+}
+
+# product of the marginal characteristic functions
+phi_prod <- function(s, t) {
+  exp(-0.5 * s^2) * exp(-0.5 * t^2)
+}
+
+make_df <- function(rho, t0, s_grid) {
+  data.frame(
+    s = s_grid,
+    joint = phi_joint(s_grid, t0, rho),
+    prod  = phi_prod(s_grid, t0),
+    case  = factor(
+      paste0("rho==", rho),
+      levels = c("rho==0", "rho==0.7")
+    )
+  ) %>%
+    mutate(
+      joint_above = joint >= prod,
+      blue_ymin = ifelse(joint_above, prod, NA),
+      blue_ymax = ifelse(joint_above, joint, NA),
+      red_ymin  = ifelse(!joint_above, joint, NA),
+      red_ymax  = ifelse(!joint_above, prod, NA)
+    )
+}
+
+plot_df <- bind_rows(
+  make_df(0, t0, s_grid),
+  make_df(0.7, t0, s_grid)
+)
+
+# plot with shaded differences between characteristic functions
+p <- ggplot(plot_df, aes(x = s)) +
+  geom_ribbon(
+    aes(ymin = blue_ymin, ymax = blue_ymax),
+    fill = "#1f77b4", alpha = 0.25
+  ) +
+  geom_ribbon(
+    aes(ymin = red_ymin, ymax = red_ymax),
+    fill = "#d62728", alpha = 0.25
+  ) +
+  geom_line(aes(y = joint, colour = "joint"), linewidth = 1) +
+  geom_line(aes(y = prod, colour = "product"), linewidth = 1) +
+  facet_wrap(~ case, labeller = label_parsed) +
+  scale_colour_manual(
+    values = c("joint" = "#1f77b4", "product" = "#d62728"),
+    labels = c(
+      "joint"   = TeX(r'($\phi_{XY}(s,1)$)'),
+      "product" = TeX(r'($\phi_X(s)\phi_Y(1)$)')
+    ),
+    name = NULL
+  ) +
+  labs(
+    x = TeX(r'($s$)'),
+    y = "Value"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(size = 12)
+  )
+
+p
+```
+
+### 2020 birth and death rates
+```{r, birthdeath_dcov}
+dcov::dcov(birth_raw, death_raw) # distance covariance
+dcov::dcor(birth_raw, death_raw) # distance correlaiton
+
+set.seed(123)
+dcov::dcor.test(birth_raw, death_raw)$p.val # p-values
+```
+
+### Multi-line example
+```{r, multi_line_dcov}
+vars <- c("X1", "X2", "X3", "Y")
+
+# distance covariance matrix
+dcov_mat <- outer(
+  vars, vars,
+  Vectorize(function(i, j) {
+    dcov::dcov(multi_line_dat[[i]], multi_line_dat[[j]])
+  })
+)
+
+# distance correlation matrix
+dcor_mat <- outer(
+  vars, vars,
+  Vectorize(function(i, j) {
+    dcov::dcor(multi_line_dat[[i]], multi_line_dat[[j]])
+  })
+)
+
+# p-value matrix for test with H_0: distance covariance = 0
+set.seed(123)
+dcov_p_mat <- outer(
+  vars, vars,
+  Vectorize(function(i, j) {
+    dcov::dcor.test(multi_line_dat[[i]], multi_line_dat[[j]])$p.val
+  })
+)
+diag(dcov_p_mat) <- NA
+
+dimnames(dcov_mat) <- list(vars, vars)
+dimnames(dcor_mat) <- list(vars, vars)
+dimnames(dcov_p_mat) <- list(vars, vars)
+
+dcov_mat
+dcor_mat
+dcov_p_mat
+```
+
+## Illustrations using (partial) auto-distance correlation function
+Now we move on to one of the extensions of the distance covariance: auto-distance correlation function. This is used to detect non-linear serial dependence for a time seires between different lags. 
+```{r, time_series_library, output = FALSE, echo = FALSE}
+library(dCovTS) # for computing ADCF
+```
+
+### S&P500 monthly log returns
+First we look at the S&P500 monthly log returns. At first, using ACF, we only see marginally significant or non-significant ACF for the log return, but the ACF for the squared log return are all significant for at least the first 20 lags, indicating non-linear serial dependence.
+```{r, sp500_time_series_read_data, warning = FALSE, output = FALSE}
+# Get S&P500 monthly log return
+getSymbols("^GSPC", src = "yahoo", from = "1926-01-01")
+price <- Cl(GSPC)
+ret <- monthlyReturn(price, type = "log")
+```
+```{r, sp500_time_series, warning = FALSE}
+adf.test(ret) # test whether the return is stationary
+
+# plot margin settings
+op <- par(
+  mfrow = c(2,2),
+  mar = c(4.5,4.5,3,1.5),
+  oma = c(0.5,0.5,0.5,0.5),
+  mgp = c(2.5,0.8,0),
+  cex.main = 1.15,
+  cex.axis = 0.9
+)
+
+par(op)
+
+# plot the time series and the corresponding ACF for 
+plot.ts(ret, main = "Monthly log returns", xlab = "Time", ylab = "", xaxt = "n")
+acf(ret, lag.max = 36, main = expression("ACF monthly log returns " ~ r[t]))
+plot.ts(ret^2, main = "Squared monthly log returns",
+        xlab = "Time", ylab = "", xaxt = "n")
+acf(ret^2, lag.max = 36, 
+    main = expression("ACF squared monthly log returns " ~ r[t]^2))
+```
+
+When we look at the ADCF, we detect the non-linear serial dependence with the monthly log returns.
+```{r, sp500_time_series_ADCF}
+# plot the auto-distance correlation of the S&P500 monthly log returns
+dCovTS::ADCFplot(ret, ylim = c(0,0.2), MaxLag = 36, 
+                 main = expression("ADCF of monthly log returns " ~ r[t]))
+```
+
+### Los Angeles County mortality data
+Here @shumway1988modeling collected weekly data on cardiovascular mortality (`cmort`), temperature (`tempr`), and pollutant particulates (`part`) for Los Angeles County over the period 1970--1979.
+```{r, LAmort_fit_VAR}
+# read data
+data(MortTempPart)
+
+x <- MortTempPart[, c("cmort", "tempr", "part")]
+x <- as.matrix(x)
+
+cmort_ts <- ts(MortTempPart$cmort) 
+tempr_ts <- ts(MortTempPart$tempr) 
+part_ts <- ts(MortTempPart$part) 
+
+# check stationarity for each of the time series
+adf.test(cmort_ts)
+adf.test(tempr_ts)
+adf.test(part_ts)
+
+op <- par(
+  mfrow = c(3, 1),
+  mar = c(3.5, 4.5, 2, 1),
+  oma = c(1, 0, 0, 0),
+  mgp = c(2.2, 0.8, 0)
+)
+par(op)
+# plot the three time series
+plot(MortTempPart$cmort, type = "l",
+     main = "cmort",
+     xlab = "", ylab = "cmort")
+
+plot(MortTempPart$tempr, type = "l",
+     main = "tempr",
+     xlab = "", ylab = "tempr")
+
+plot(MortTempPart$part, type = "l",
+     main = "part",
+     xlab = "Time", ylab = "part")
+
+
+```
+
+First we look at the partial ADCF and check thee lagged cross-dependence between different variables. Here we can see many of the partial ADCF are significant across different lags for each pair of the variables, motivating the use of a dynamic multivariate model.
+```{r, LAmort_mADCF}
+mADCFplot(MortTempPart, MaxLag = 10)
+```
+
+Now we fit a VAR(2) model to the three time series and verify the fitness by checking the partial ADCF of the residuals. The (partial) ADCF is insignificant for most lags both within and across pairs of series, suggesting a good fit.
+```{r, LAmort_acf_residuals}
+# fit VAR with p=2
+fit_var <- VAR(x, p = 2, type = "const")
+summary(fit_var)
+
+E <- residuals(fit_var)
+
+op <- par(mfrow = c(3, 1), mar = c(4, 4, 2, 1))
+par(op)
+
+# check ACF of the residuals
+acf(E[, "cmort"], lag.max = 20, main = "ACF of VAR residuals: cmort")
+acf(E[, "tempr"], lag.max = 20, main = "ACF of VAR residuals: tempr")
+acf(E[, "part"],  lag.max = 20, main = "ACF of VAR residuals: part")
+
+mADCFplot(E, MaxLag = 10)
+```
+
