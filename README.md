@@ -1,3 +1,3 @@
  
 
-[View the rendered html](https://agi-lab.github.io/parametric/index.html)
+[View the rendered html](https://agi-lab.github.io/beyond-correlation/index.html)
