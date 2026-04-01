@@ -28,7 +28,7 @@ editor_options:
     wrap: 72
 ---
 
-```{r, echo = FALSE, output = FALSE}
+```{r, read_libraries, echo = FALSE, output = FALSE}
 # Loading required libraries
 library(ggplot2)
 library(patchwork)
@@ -715,7 +715,7 @@ birthdeath_hellCor$p.value # p-value with H_0: HellCor = 0
 ```
 
 ### Multi-line example
-```{r, multi_line_hellcor}
+```{r, multi_line_hellcor, eval = FALSE}
 vars <- c("X1", "X2", "X3", "Y")
 
 # compute Hellinger correlaiton for each pair of the claim variables
@@ -858,6 +858,9 @@ dcov_mat
 dcor_mat
 dcov_p_mat
 ```
+
+## Illustrations using joint distance covariance/correlation
+This will be on other page.
 
 ## Illustrations using (partial) auto-distance correlation function
 Now we move on to one of the extensions of the distance covariance: auto-distance correlation function. This is used to detect non-linear serial dependence for a time seires between different lags. 
