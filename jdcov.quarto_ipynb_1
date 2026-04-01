@@ -1,0 +1,46 @@
+{
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "---\n",
+        "title: \"Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics\"\n",
+        "bibliography: references.bib\n",
+        "output:\n",
+        "  html_document:\n",
+        "    toc: true\n",
+        "    number_sections: true\n",
+        "    df_print: paged\n",
+        "\n",
+        "editor_options:\n",
+        "  markdown:\n",
+        "    wrap: 72\n",
+        "---\n",
+        "\n",
+        "# Illustrations using joint distance covariance/correlation"
+      ],
+      "id": "fe4af315"
+    },
+    {
+      "cell_type": "code",
+      "metadata": {},
+      "source": [
+        "print(\"Hello\")"
+      ],
+      "id": "43aef28f",
+      "execution_count": null,
+      "outputs": []
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python3",
+      "language": "python",
+      "display_name": "Python 3 (ipykernel)",
+      "path": "/Users/homingl/Coding/GitHub/beyond-correlation/.venv/share/jupyter/kernels/python3"
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 5
+}

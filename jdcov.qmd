@@ -1,5 +1,19 @@
 ---
-title: "Untitled"
-format: html
+title: "Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics"
+bibliography: references.bib
+output:
+  html_document:
+    toc: true
+    number_sections: true
+    df_print: paged
+
+editor_options:
+  markdown:
+    wrap: 72
 ---
+
+# Illustrations using joint distance covariance/correlation
+```{python}
+print("Hello")
+```
 

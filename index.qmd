@@ -860,7 +860,7 @@ dcov_p_mat
 ```
 
 ## Illustrations using joint distance covariance/correlation
-This will be on other page.
+The illustrations of the joint distance covariance involves model training and was done in `Python`. Refer to [this page](jdcov.qmd) for the specific code and results.
 
 ## Illustrations using (partial) auto-distance correlation function
 Now we move on to one of the extensions of the distance covariance: auto-distance correlation function. This is used to detect non-linear serial dependence for a time seires between different lags. 

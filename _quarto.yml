@@ -3,13 +3,16 @@ project:
   output-dir: docs
   render:
     - index.qmd
+    - jdcov.qmd
 
 website:
   title: "beyond-correlation"
   navbar:
     left:
       - href: index.qmd
-        text: Home
+        text: R
+      - href: jdcov.qmd
+        text: Python
 
 format:
   html:
