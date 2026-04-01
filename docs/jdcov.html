@@ -177,12 +177,418 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<div id="13ddcb51" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Utility libraries</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pyreadr</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> seaborn <span class="im">as</span> sns</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> multiprocessing <span class="im">import</span> Pool</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pickle</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> copy</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> copy <span class="im">import</span> deepcopy</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch, math, multiprocessing <span class="im">as</span> mp</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="co"># torch related libraries for neural network architecture</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn <span class="im">as</span> nn</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch.nn.functional <span class="im">as</span> F</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch_optimizer <span class="im">as</span> optimz</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> DataLoader, TensorDataset, random_split</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># sklearn libraries for data preprocessing and machine learning related functions</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> StratifiedKFold, train_test_split, ParameterGrid</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> mean_poisson_deviance, make_scorer, log_loss</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.preprocessing <span class="im">import</span> MinMaxScaler, OneHotEncoder, LabelEncoder</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.compose <span class="im">import</span> ColumnTransformer</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.pipeline <span class="im">import</span> Pipeline</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.neighbors <span class="im">import</span> KernelDensity</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Package for sklearn with torch</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> skorch <span class="im">import</span> NeuralNetRegressor, NeuralNetClassifier</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> skorch.callbacks <span class="im">import</span> EarlyStopping</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> skorch.helper <span class="im">import</span> predefined_split</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> skopt <span class="im">import</span> gp_minimize</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> skopt.space <span class="im">import</span> Integer, Real, Categorical</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Scipy libraries for distributions and tests</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> poisson, wilcoxon, chi2_contingency, f_oneway, kruskal</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats.distributions <span class="im">import</span> chi2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="c30c6455" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loading utility functions from /general</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>dcovs.py</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>dcovs_memeff.py</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>utils.py</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>metrics.py</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>NN.py</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run tune_pg15_parallel.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 <section id="illustrations-using-joint-distance-covariancecorrelation" class="level1">
 <h1>Illustrations using joint distance covariance/correlation</h1>
-<div id="5414d63a" class="cell" data-execution_count="1">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Hello"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Hello</code></pre>
+<div id="845ada54" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_pg15 <span class="op">=</span> pyreadr.read_r(<span class="st">'data/pg15training.rda'</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df_pg15 <span class="op">=</span> df_pg15[<span class="st">'pg15training'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="be792e77" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_pg15.copy(deep<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process<span class="op">\</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>             .rename(columns<span class="op">=</span>{<span class="st">'Gender'</span>: <span class="st">'Female'</span>, <span class="st">'Group2'</span>: <span class="st">'Region'</span>, </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Poldur'</span>: <span class="st">'Duration'</span>,<span class="st">'Numtppd'</span>: <span class="st">'nclaims'</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Type'</span>: <span class="st">'CarType'</span>, <span class="st">'Category'</span>: <span class="st">'CarCat'</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'Group1'</span>: <span class="st">'CarGroup'</span>})</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.iloc[<span class="dv">21</span>:] <span class="co"># removing duplicate observations</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>df_process.reset_index(inplace <span class="op">=</span> <span class="va">True</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop(<span class="st">'rownames'</span>, axis<span class="op">=</span><span class="dv">1</span>) <span class="co"># Removing index column</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop([<span class="st">'Numtpbi'</span>, <span class="st">'Indtppd'</span>, <span class="st">'Indtpbi'</span>, <span class="st">'PolNum'</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'CalYear'</span>, <span class="st">'SubGroup2'</span>, <span class="st">'Adind'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="912f7a06" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute claim frequency</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'claim_freq'</span>] <span class="op">=</span> df_process[<span class="st">'nclaims'</span>] <span class="op">/</span> (df_process[<span class="st">'Exppdays'</span>] <span class="op">/</span> <span class="dv">365</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Map 'Female' column to binary (0 = Male, 1 = Female) if it's stored as string</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'Female'</span>] <span class="op">=</span> df_process[<span class="st">'Female'</span>].<span class="bu">map</span>({<span class="st">'Male'</span>: <span class="dv">0</span>, <span class="st">'Female'</span>: <span class="dv">1</span>})</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort region order by male average claim frequency (Female == 0)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>male_avg <span class="op">=</span> (</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    df_process[df_process[<span class="st">'Female'</span>] <span class="op">==</span> <span class="dv">0</span>]</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">'Region'</span>, observed<span class="op">=</span><span class="va">True</span>)[<span class="st">'claim_freq'</span>]</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    .mean()</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    .sort_values(ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>region_order <span class="op">=</span> male_avg.index.tolist()</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-map back for legend clarity</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'Female'</span>] <span class="op">=</span> df_process[<span class="st">'Female'</span>].<span class="bu">map</span>({<span class="dv">0</span>: <span class="st">'Male'</span>, <span class="dv">1</span>: <span class="st">'Female'</span>})</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.5</span>))</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>sns.barplot(</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>df_process,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">'Region'</span>,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">'claim_freq'</span>,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    hue<span class="op">=</span><span class="st">'Female'</span>,</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    order<span class="op">=</span>region_order,</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    errorbar<span class="op">=</span><span class="va">None</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Region"</span>)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Average Claim Frequency"</span>)</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>plt.legend(title<span class="op">=</span><span class="st">"Gender"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="jdcov_files/figure-html/cell-6-output-1.png" width="672" height="393" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="5b655fd6" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> pd.crosstab(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    df_process[<span class="st">'Region'</span>],         <span class="co"># rows</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    df_process[<span class="st">'Female'</span>],         <span class="co"># columns: 0 = Male, 1 = Female</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Row-wise proportions for the stacked bar</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>props <span class="op">=</span> counts.div(counts.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>), axis<span class="op">=</span><span class="dv">0</span>)      <span class="co"># normalise by row</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>props.columns <span class="op">=</span> [<span class="st">'Male'</span>, <span class="st">'Female'</span>]                  <span class="co"># nicer labels</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ────────────────────────────────────────────────</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co"># 3.  Plot</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co"># ────────────────────────────────────────────────</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> props.plot(kind<span class="op">=</span><span class="st">'bar'</span>, stacked<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>), width<span class="op">=</span><span class="fl">.8</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"Region"</span>)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Proportion"</span>)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>ax.legend(title<span class="op">=</span><span class="st">"Gender"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>ax.tick_params(axis<span class="op">=</span><span class="st">'x'</span>, rotation<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co"># horizontal line at the overall mean male proportion</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>mean_male <span class="op">=</span> props[<span class="st">'Male'</span>].mean()</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>ax.axhline(mean_male, ls<span class="op">=</span><span class="st">'--'</span>, c<span class="op">=</span><span class="st">'black'</span>, lw<span class="op">=</span><span class="fl">1.2</span>,</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="ss">f"Mean Male Proportion (</span><span class="sc">{</span>mean_male<span class="sc">:.2f}</span><span class="ss">)"</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>ax.legend()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="jdcov_files/figure-html/cell-7-output-1.png" width="812" height="356" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="7623fab0" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop([<span class="st">'claim_freq'</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'strat_key'</span>] <span class="op">=</span> df_process[<span class="st">'nclaims'</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> df_process[<span class="st">'Female'</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> df_process[<span class="st">'Region'</span>].astype(<span class="bu">str</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="800a66b4" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1220</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>train_data, test_data <span class="op">=</span> stratified_split_with_tolerance(df_process, <span class="st">'strat_key'</span>, tolerance<span class="op">=</span><span class="fl">0.0</span>, test_size<span class="op">=</span><span class="fl">0.2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="db60528d" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>train_data[<span class="st">'Exppdays'</span>] <span class="op">=</span> (train_data[<span class="st">'Exppdays'</span>]<span class="op">/</span><span class="dv">365</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> train_data.rename(columns <span class="op">=</span> {<span class="st">'Exppdays'</span>: <span class="st">'Exposure'</span>})</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>test_data[<span class="st">'Exppdays'</span>] <span class="op">=</span> (test_data[<span class="st">'Exppdays'</span>]<span class="op">/</span><span class="dv">365</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> test_data.rename(columns <span class="op">=</span> {<span class="st">'Exppdays'</span>: <span class="st">'Exposure'</span>})</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> train_data</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> test_data</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> train_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> test_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>offset_train <span class="op">=</span> train_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>offset_test <span class="op">=</span> test_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>X_train[<span class="st">'Female'</span>] <span class="op">=</span> pd.get_dummies(X_train[<span class="st">"Female"</span>])[<span class="st">'Female'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>X_test[<span class="st">'Female'</span>] <span class="op">=</span> pd.get_dummies(X_test[<span class="st">"Female"</span>])[<span class="st">'Female'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>X_train[<span class="st">'CarCat'</span>] <span class="op">=</span> X_train[<span class="st">'CarCat'</span>]<span class="op">\</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>                    .cat.rename_categories({<span class="st">'Small'</span>:<span class="dv">0</span>, <span class="st">'Medium'</span>:<span class="dv">1</span>, <span class="st">'Large'</span>:<span class="dv">2</span>})</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>X_test[<span class="st">'CarCat'</span>] <span class="op">=</span> X_test[<span class="st">'CarCat'</span>]<span class="op">\</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                   .cat.rename_categories({<span class="st">'Small'</span>:<span class="dv">0</span>, <span class="st">'Medium'</span>:<span class="dv">1</span>, <span class="st">'Large'</span>:<span class="dv">2</span>})</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Column names for different preprocessor</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>scale_col <span class="op">=</span> [<span class="st">'Age'</span>, <span class="st">'Bonus'</span>, <span class="st">'Duration'</span>, <span class="st">'Value'</span>, <span class="st">'Density'</span>]</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>onehot_col <span class="op">=</span> [<span class="st">'Region'</span>, <span class="st">'CarType'</span>, <span class="st">'Occupation'</span>,<span class="st">'CarGroup'</span>]</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting up preprocessor for preprocessing the data</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>preprocessor <span class="op">=</span> ColumnTransformer(</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    transformers<span class="op">=</span>[</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'num'</span>, MinMaxScaler(feature_range<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)), scale_col),</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'cat_onehot'</span>, OneHotEncoder(sparse_output<span class="op">=</span><span class="va">False</span>), onehot_col)</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    remainder<span class="op">=</span><span class="st">'passthrough'</span>  <span class="co"># Passthrough any columns not specified for transformation (e.g., already processed)</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> preprocessor.fit_transform(X_train, y_train)</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> preprocessor.transform(X_test)</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>processed_columns <span class="op">=</span> scale_col <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">list</span>(preprocessor.named_transformers_[<span class="st">'cat_onehot'</span>].get_feature_names_out()) <span class="op">\</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>                    <span class="op">+</span> [<span class="st">'Female'</span>] <span class="op">+</span> [<span class="st">'CarCat'</span>] <span class="op">+</span> [<span class="st">'Exposure'</span>] <span class="op">+</span> [<span class="st">'nclaims'</span>] <span class="op">+</span> [<span class="st">'strat_key'</span>]</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> pd.DataFrame(X_train, columns<span class="op">=</span>processed_columns)</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> pd.DataFrame(X_test, columns<span class="op">=</span>processed_columns)</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstructing the transformed data into pandas dataset.</span></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1220</span>)</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>subtrain_data, valid_data <span class="op">=</span> stratified_split_with_tolerance(X_train, <span class="st">'strat_key'</span>, tolerance<span class="op">=</span><span class="fl">0.05</span>, test_size<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>X_subtrain <span class="op">=</span> subtrain_data.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>X_valid <span class="op">=</span> valid_data.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>y_subtrain <span class="op">=</span> subtrain_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>y_valid <span class="op">=</span> valid_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>offset_subtrain <span class="op">=</span> subtrain_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>offset_valid <span class="op">=</span> valid_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>strat_key <span class="op">=</span> X_train[<span class="st">'strat_key'</span>]</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>Z1_train <span class="op">=</span> X_train[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>Z1_subtrain <span class="op">=</span> X_subtrain[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>Z1_valid <span class="op">=</span> X_valid[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>Z1_test <span class="op">=</span> X_test[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>                     </span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>Z2_train <span class="op">=</span> X_train[<span class="st">'Female'</span>]</span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>Z2_subtrain <span class="op">=</span> X_subtrain[<span class="st">'Female'</span>]</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>Z2_valid <span class="op">=</span> X_valid[<span class="st">'Female'</span>]</span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>Z2_test <span class="op">=</span> X_test[<span class="st">'Female'</span>]</span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>X_subtrain <span class="op">=</span> X_subtrain.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>X_valid <span class="op">=</span> X_valid.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>X_train_tensor <span class="op">=</span> torch.tensor(X_train.values.astype(np.float32))</span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>X_test_tensor <span class="op">=</span> torch.tensor(X_test.values.astype(np.float32))</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>X_subtrain_tensor <span class="op">=</span> torch.tensor(X_subtrain.values.astype(np.float32))</span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>X_valid_tensor <span class="op">=</span> torch.tensor(X_valid.values.astype(np.float32))</span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>y_train_tensor <span class="op">=</span> torch.tensor(y_train.values.astype(np.float32))</span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>y_test_tensor <span class="op">=</span> torch.tensor(y_test.values.astype(np.float32))</span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>y_subtrain_tensor <span class="op">=</span> torch.tensor(y_subtrain.values.astype(np.float32))</span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a>y_valid_tensor <span class="op">=</span> torch.tensor(y_valid.values.astype(np.float32))</span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a>offset_train_tensor <span class="op">=</span> torch.tensor(offset_train.values.astype(np.float32))</span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a>offset_test_tensor <span class="op">=</span> torch.tensor(offset_test.values.astype(np.float32))</span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>offset_subtrain_tensor <span class="op">=</span> torch.tensor(offset_subtrain.values.astype(np.float32))</span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>offset_valid_tensor <span class="op">=</span> torch.tensor(offset_valid.values.astype(np.float32))</span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>Z1_train_tensor <span class="op">=</span> torch.tensor(Z1_train.values.astype(np.float32))</span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>Z1_test_tensor <span class="op">=</span> torch.tensor(Z1_test.values.astype(np.float32))</span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>Z1_subtrain_tensor <span class="op">=</span> torch.tensor(Z1_subtrain.values.astype(np.float32))</span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>Z1_valid_tensor <span class="op">=</span> torch.tensor(Z1_valid.values.astype(np.float32))</span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>Z2_train_tensor <span class="op">=</span> torch.tensor(Z2_train.values.astype(np.float32))</span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>Z2_test_tensor <span class="op">=</span> torch.tensor(Z2_test.values.astype(np.float32))</span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>Z2_subtrain_tensor <span class="op">=</span> torch.tensor(Z2_subtrain.values.astype(np.float32))</span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>Z2_valid_tensor <span class="op">=</span> torch.tensor(Z2_valid.values.astype(np.float32))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="ceed855e" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loading current best checkpoints</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>best_hp_pdev <span class="op">=</span> load_checkpoint(<span class="st">"checkpoint/best_checkpoint.pt"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>best_hp_ccdcov <span class="op">=</span> load_checkpoint(<span class="st">"checkpoint_ccdcov/best_checkpoint.pt"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>best_hp_jdcov <span class="op">=</span> load_checkpoint(<span class="st">"checkpoint_jdcov/best_checkpoint.pt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="48b07fef" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>set_seed(<span class="dv">42</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>result_pdev_test <span class="op">=</span> fit_poisson_pg15(X_train_tensor, y_train_tensor,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                        Z1_train_tensor, Z2_train_tensor, offset_train_tensor,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>                        X_test_tensor, y_test_tensor, offset_test_tensor,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>                        hp <span class="op">=</span> best_hp_pdev, reg_type <span class="op">=</span> <span class="st">"none"</span>, lambda_reg <span class="op">=</span> <span class="dv">0</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>                        </span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>set_seed(<span class="dv">42</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>result_ccdcov_test <span class="op">=</span> fit_poisson_pg15(X_train_tensor, y_train_tensor,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                        Z1_train_tensor, Z2_train_tensor, offset_train_tensor,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                        X_test_tensor, y_test_tensor, offset_test_tensor,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                        hp <span class="op">=</span> best_hp_pdev, lambda_reg <span class="op">=</span> <span class="dv">40</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                        reg_type <span class="op">=</span> <span class="st">"ccdcov"</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                        </span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>set_seed(<span class="dv">42</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>result_jdcov_test <span class="op">=</span> fit_poisson_pg15(X_train_tensor, y_train_tensor,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                        Z1_train_tensor, Z2_train_tensor, offset_train_tensor,</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                        X_test_tensor, y_test_tensor, offset_test_tensor,</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>                        hp <span class="op">=</span> best_hp_pdev, lambda_reg <span class="op">=</span> <span class="dv">30</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>                        reg_type <span class="op">=</span> <span class="st">"jdcov"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>/Users/homingl/Coding/GitHub/beyond-correlation/.venv/lib/python3.14/site-packages/torch/autograd/graph.py:869: UserWarning: Using backward() with create_graph=True will create a reference cycle between the parameter and its gradient which can cause a memory leak. We recommend using autograd.grad when creating the graph to avoid this. If you have to use this function, make sure to reset the .grad fields of your parameters to None after use to break the cycle and avoid the leak. (Triggered internally at /Users/runner/work/pytorch/pytorch/pytorch/torch/csrc/autograd/engine.cpp:1304.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass</code></pre>
+</div>
+</div>
+<div id="a4924ef3" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'font.size'</span>: <span class="dv">13</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'axes.titlesize'</span>: <span class="dv">15</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">'axes.labelsize'</span>: <span class="dv">14</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">'xtick.labelsize'</span>: <span class="dv">12</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">'ytick.labelsize'</span>: <span class="dv">12</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">'legend.fontsize'</span>: <span class="dv">12</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">'font.family'</span>: <span class="st">'DejaVu Sans'</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Region labels &amp; Tol colour-blind palette</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>region_labels <span class="op">=</span> [<span class="st">'Region_L'</span>, <span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>                 <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>tol_colors <span class="op">=</span> [</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">'#332288'</span>, <span class="st">'#117733'</span>, <span class="st">'#88CCEE'</span>, <span class="st">'#DDCC77'</span>, <span class="st">'#CC6677'</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">'#AA4499'</span>, <span class="st">'#44AA99'</span>, <span class="st">'#999933'</span>, <span class="st">'#882255'</span>, <span class="st">'#661100'</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>region_colors <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">zip</span>(region_labels, tol_colors))</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>df_kde_1 <span class="op">=</span> make_interaction_dfs(result_pdev_test[<span class="st">'val_output'</span>], </span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>                                Z1_test_tensor, Z2_test_tensor)[<span class="st">"gender_region"</span>]</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>df_kde_2 <span class="op">=</span> make_interaction_dfs(result_ccdcov_test[<span class="st">'val_output'</span>], </span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>                               Z1_test_tensor, Z2_test_tensor)[<span class="st">"gender_region"</span>]</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>df_kde_3 <span class="op">=</span> make_interaction_dfs(result_jdcov_test[<span class="st">'val_output'</span>],</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>                               Z1_test_tensor, Z2_test_tensor)[<span class="st">"gender_region"</span>]</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>df_cdf_1 <span class="op">=</span> build_df(result_pdev_test[<span class="st">'val_output'</span>],     Z2_test_tensor, Z1_test_tensor)</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>df_cdf_2 <span class="op">=</span> build_df(result_ccdcov_test[<span class="st">'val_output'</span>],  Z2_test_tensor, Z1_test_tensor)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>df_cdf_3 <span class="op">=</span> build_df(result_jdcov_test[<span class="st">'val_output'</span>],Z2_test_tensor, Z1_test_tensor)</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>kde_dfs <span class="op">=</span> [df_kde_1, df_kde_2, df_kde_3]</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>cdf_dfs <span class="op">=</span> [df_cdf_1, df_cdf_2, df_cdf_3]</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>titles  <span class="op">=</span> [<span class="st">"(a) No regularisation"</span>,</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>           <span class="vs">r"</span><span class="kw">(</span><span class="vs">b</span><span class="kw">)</span><span class="vs"> CCdCov </span><span class="kw">(</span><span class="dv">$</span><span class="er">\</span><span class="vs">lambda=40</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>,</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>           <span class="vs">r"</span><span class="kw">(</span><span class="vs">c</span><span class="kw">)</span><span class="vs"> JdCov </span><span class="kw">(</span><span class="dv">$</span><span class="er">\</span><span class="vs">lambda=30</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>]</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a><span class="co"># COMBINED FIGURE 2×3</span></span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(nrows<span class="op">=</span><span class="dv">2</span>, ncols<span class="op">=</span><span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">9</span>), sharex<span class="op">=</span><span class="st">'col'</span>)</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a><span class="co"># KDE row</span></span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>kde_handles, ref_kde <span class="op">=</span> {}, <span class="va">None</span></span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col, (df, title) <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="bu">zip</span>(kde_dfs, titles)):</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>    ax <span class="op">=</span> axes[<span class="dv">0</span>, col]</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>    ax.set_title(title)</span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>    h, ref <span class="op">=</span> plot_kde_by_region_gender(</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>        ax, df,</span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>        interaction_col<span class="op">=</span><span class="st">'Gender_region'</span>,</span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>        output_col<span class="op">=</span><span class="st">'Output'</span></span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ref_kde <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>        ref_kde <span class="op">=</span> ref</span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>    kde_handles.update(h)</span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>,<span class="dv">0</span>].set_ylabel(<span class="st">"Density"</span>)</span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a><span class="co"># CDF row</span></span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>cdf_handles <span class="op">=</span> {}</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col, df <span class="kw">in</span> <span class="bu">enumerate</span>(cdf_dfs):</span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>    ax <span class="op">=</span> axes[<span class="dv">1</span>, col]</span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> plot_empirical_cdf(</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>        ax, df,</span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>        interaction_col<span class="op">=</span><span class="st">'Gender_region'</span>,</span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>        output_col<span class="op">=</span><span class="st">'Predicted claim frequency'</span></span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> col <span class="op">==</span> <span class="dv">0</span>:  <span class="co"># first plot gives reference handle</span></span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>        ref_cdf <span class="op">=</span> h[<span class="st">'Reference distribution'</span>]</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>    cdf_handles.update({k:v <span class="cf">for</span> k,v <span class="kw">in</span> h.items() <span class="cf">if</span> k<span class="op">!=</span><span class="st">'Reference distribution'</span>})</span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>,<span class="dv">0</span>].set_ylabel(<span class="st">"Empirical CDF"</span>)</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a><span class="co"># Shared region legend (right of figure)</span></span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>region_handles <span class="op">=</span> {}</span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> (kde_handles, cdf_handles):</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>    region_handles.update(d)</span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>sorted_regions  <span class="op">=</span> <span class="bu">sorted</span>(region_handles.keys())</span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>legend_handles  <span class="op">=</span> [ref_kde] <span class="op">+</span> [region_handles[r] <span class="cf">for</span> r <span class="kw">in</span> sorted_regions]</span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>legend_labels   <span class="op">=</span> [<span class="st">"Reference distribution"</span>] <span class="op">+</span> sorted_regions</span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>fig.legend(legend_handles, legend_labels,</span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>           loc<span class="op">=</span><span class="st">'center left'</span>, bbox_to_anchor<span class="op">=</span>(<span class="fl">0.88</span>, <span class="fl">0.5</span>), fontsize<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a><span class="co"># inline Male / Female key + ensure x-ticks on KDE row</span></span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes[<span class="dv">0</span>]:                           <span class="co"># KDE row</span></span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>    <span class="co"># show x-tick labels that were hidden by sharex</span></span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(axis<span class="op">=</span><span class="st">'x'</span>, which<span class="op">=</span><span class="st">'both'</span>, labelbottom<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>    <span class="co"># key in upper-right</span></span>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>    ax.text(</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.97</span>, <span class="fl">0.97</span>,</span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a>        <span class="st">'─  Male</span><span class="ch">\n</span><span class="st">…  Female'</span>,</span>
+<span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a>        transform<span class="op">=</span>ax.transAxes,</span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">'right'</span>, va<span class="op">=</span><span class="st">'top'</span>, fontsize<span class="op">=</span><span class="dv">11</span>,</span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>        bbox<span class="op">=</span><span class="bu">dict</span>(facecolor<span class="op">=</span><span class="st">'white'</span>, edgecolor<span class="op">=</span><span class="st">'gray'</span>,</span>
+<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a>                  boxstyle<span class="op">=</span><span class="st">'round,pad=0.3'</span>)</span>
+<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes[<span class="dv">1</span>]:                           <span class="co"># CDF row</span></span>
+<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a>    <span class="co"># key in upper-left (original position)</span></span>
+<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a>    ax.text(</span>
+<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a>        <span class="fl">0.03</span>, <span class="fl">0.97</span>,</span>
+<span id="cb13-97"><a href="#cb13-97" aria-hidden="true" tabindex="-1"></a>        <span class="st">'─  Male</span><span class="ch">\n</span><span class="st">…  Female'</span>,</span>
+<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a>        transform<span class="op">=</span>ax.transAxes,</span>
+<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a>        ha<span class="op">=</span><span class="st">'left'</span>, va<span class="op">=</span><span class="st">'top'</span>, fontsize<span class="op">=</span><span class="dv">11</span>,</span>
+<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a>        bbox<span class="op">=</span><span class="bu">dict</span>(facecolor<span class="op">=</span><span class="st">'white'</span>, edgecolor<span class="op">=</span><span class="st">'gray'</span>,</span>
+<span id="cb13-101"><a href="#cb13-101" aria-hidden="true" tabindex="-1"></a>                  boxstyle<span class="op">=</span><span class="st">'round,pad=0.3'</span>)</span>
+<span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a>plt.tight_layout(rect<span class="op">=</span>[<span class="fl">0.06</span>, <span class="dv">0</span>, <span class="fl">0.85</span>, <span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="jdcov_files/figure-html/cell-13-output-1.png" width="1502" height="845" class="figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 

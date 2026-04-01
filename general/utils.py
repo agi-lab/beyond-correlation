@@ -30,58 +30,25 @@ def set_seed(seed):
     torch.use_deterministic_algorithms(True)
 
 def stratified_split_with_tolerance(data, strat_key_col, tolerance=0.1, test_size=0.2):
-    """Train/validation split with per-stratum jitter around the target ratio.
-
-    For each distinct value of strat_key_col the function:
-
-    1.  Shuffles the row indices for that stratum.
-    2.  Picks a test-set fraction uniformly drawn from  
-        [test_size − tolerance,  test_size + tolerance].
-    3.  Puts the selected rows into the validation set, the rest into
-        the training set.
-    
-    This is useful when you must keep approximate class balance but wish
-    to avoid identical splits across repeated runs.
-
-    Args:
-        data : pd.DataFrame
-            Full dataset.
-        strat_key_col : str
-            Column whose values define the strata (e.g., "fold_id").
-        test_size : float, default 0.2
-            Target hold-out ratio *per stratum* (before jitter).
-        tolerance : float, default 0.10
-            Maximum ± deviation added to test_size for each stratum.
-        rng : np.random.Generator, optional
-            Source of randomness (pass np.random.default_rng(seed) for
-            reproducibility).  Falls back to np.random.
-
-    Returns:
-        train_df : pd.DataFrame
-            Rows not selected into the hold-out split.
-        test_df : pd.DataFrame
-            Hold-out rows, stratified with ± tolerance variation.
-    """
-    # Get the stratification key counts
+    """Train/test split with per-stratum jitter around the target ratio."""
     strat_counts = data[strat_key_col].value_counts(normalize=True)
-    
-    # Create empty lists to store train and test indices
+
     train_idx, test_idx = [], []
-    
-    for strat_value, prop in strat_counts.items():
-        # Get indices for this stratum
-        stratum_indices = data[data[strat_key_col] == strat_value].index.to_numpy()  # Convert index to NumPy array
-        
-        # Adjust test size based on tolerance
-        n_test = int(len(stratum_indices) * (test_size + np.random.uniform(-tolerance, tolerance)))
-        n_test = max(1, n_test)  # Ensure at least one sample in the test set
-        
-        # Shuffle and split indices
-        np.random.shuffle(stratum_indices)  # Shuffle the NumPy array
+
+    for strat_value in strat_counts.index:
+        stratum_indices = data.index[data[strat_key_col] == strat_value].to_numpy(copy=True)
+
+        frac = test_size + np.random.uniform(-tolerance, tolerance)
+        frac = min(max(frac, 0), 1)
+
+        n_test = int(len(stratum_indices) * frac)
+        n_test = max(1, n_test)
+
+        stratum_indices = np.random.permutation(stratum_indices)
+
         test_idx.extend(stratum_indices[:n_test])
         train_idx.extend(stratum_indices[n_test:])
-    
-    # Return train and test splits
+
     return data.loc[train_idx], data.loc[test_idx]
 
 def save_run(
