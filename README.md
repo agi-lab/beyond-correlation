@@ -1,1 +1,1 @@
-Follow the link https://agi-lab.github.io/beyond-correlation/ for the code of the visualisation for the motivating examples as well as the illustration of the computation of distance-based dependence metrics.
+The code for visualising the motivating examples, together with illustrations of the computation of the distance-based dependence statistics, is available [here](https://agi-lab.github.io/beyond-correlation/).
