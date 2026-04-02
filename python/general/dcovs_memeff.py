@@ -32,8 +32,8 @@ def sq_dcov_unbiased_mem(x1: torch.Tensor,
 
     # ---------- full‑matrix path ----------
     if block is None:
-        return (_u_centered_dist(x1) *
-                _u_centered_dist(x2)).sum() / (n*(n-3))
+        return (_u_centered_dist_mem(x1) *
+                _u_centered_dist_mem(x2)).sum() / (n*(n-3))
 
     # ---------- streaming path ------------
     rc = 1.0/(n-2)
@@ -95,7 +95,7 @@ def JdCov_sq_unbiased_mem(*vars: torch.Tensor,
     if block is None:
         prod = torch.ones((n, n), dtype=dtype)
         for v in vars:
-            prod.mul_(_u_centered_dist(v) + c)
+            prod.mul_(_u_centered_dist_mem(v) + c)
         return prod.sum() / (n*(n-3)) - n/(n-3)
 
     # ------------- streaming path ------------------

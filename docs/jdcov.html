@@ -58,7 +58,26 @@ div.sourceCode
 @media screen {
 pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -151,7 +170,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#illustrations-using-joint-distance-covariancecorrelation" id="toc-illustrations-using-joint-distance-covariancecorrelation" class="nav-link active" data-scroll-target="#illustrations-using-joint-distance-covariancecorrelation">Illustrations using joint distance covariance/correlation</a></li>
+  <li><a href="#illustrations-using-joint-distance-covariancecorrelation" id="toc-illustrations-using-joint-distance-covariancecorrelation" class="nav-link active" data-scroll-target="#illustrations-using-joint-distance-covariancecorrelation">Illustrations using joint distance covariance/correlation</a>
+  <ul class="collapse">
+  <li><a href="#exploratory-data-analysis" id="toc-exploratory-data-analysis" class="nav-link" data-scroll-target="#exploratory-data-analysis">Exploratory data analysis</a></li>
+  <li><a href="#model-training" id="toc-model-training" class="nav-link" data-scroll-target="#model-training">Model training</a></li>
+  <li><a href="#model-output" id="toc-model-output" class="nav-link" data-scroll-target="#model-output">Model output</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -177,7 +201,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="13ddcb51" class="cell" data-execution_count="1">
+<div id="load-packages" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Utility libraries</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -220,22 +244,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> poisson, wilcoxon, chi2_contingency, f_oneway, kruskal</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats.distributions <span class="im">import</span> chi2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="c30c6455" class="cell" data-execution_count="2">
+<div id="load-defined-functions" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loading utility functions from /general</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>dcovs.py</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>dcovs_memeff.py</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>utils.py</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>metrics.py</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run general<span class="op">/</span>NN.py</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run tune_pg15_parallel.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run python<span class="op">/</span>general<span class="op">/</span>dcovs.py</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run python<span class="op">/</span>general<span class="op">/</span>dcovs_memeff.py</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run python<span class="op">/</span>general<span class="op">/</span>utils.py</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run python<span class="op">/</span>general<span class="op">/</span>metrics.py</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run python<span class="op">/</span>general<span class="op">/</span>NN.py</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="op">%</span>run python<span class="op">/</span>general<span class="op">/</span>tune_pg15_parallel.py</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <section id="illustrations-using-joint-distance-covariancecorrelation" class="level1">
 <h1>Illustrations using joint distance covariance/correlation</h1>
-<div id="845ada54" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_pg15 <span class="op">=</span> pyreadr.read_r(<span class="st">'data/pg15training.rda'</span>)</span>
+<p>To illustrate the use of joint distance covariance, we make use of the example in <span class="citation" data-cites="lee2025machine">Lee et al. (<a href="#ref-lee2025machine" role="doc-biblioref">2025</a>)</span>. Here we focus on demographic parity for the output of a machine learning algorithm, where we aim for the model output to be independent of the protected features.</p>
+<section id="exploratory-data-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="exploratory-data-analysis">Exploratory data analysis</h2>
+<p>First, we take a look at the data. We use the <code>pg15training</code> dataset available in the <code>CASdatasets</code> package in <code>R</code>, which contains French motor insurance data from 2015. In this dataset, we consider gender and residential region (which can be a proxy for ethnicity, race, etc.) as the protected features.</p>
+<div id="read_data" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_pg15 <span class="op">=</span> pyreadr.read_r(<span class="st">'python/data/pg15training.rda'</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df_pg15 <span class="op">=</span> df_pg15[<span class="st">'pg15training'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="be792e77" class="cell" data-execution_count="4">
+<div id="preprocess-data" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_pg15.copy(deep<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process<span class="op">\</span></span>
@@ -248,51 +276,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>df_process.reset_index(inplace <span class="op">=</span> <span class="va">True</span>)</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop(<span class="st">'rownames'</span>, axis<span class="op">=</span><span class="dv">1</span>) <span class="co"># Removing index column</span></span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop([<span class="st">'Numtpbi'</span>, <span class="st">'Indtppd'</span>, <span class="st">'Indtpbi'</span>, <span class="st">'PolNum'</span>,</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'CalYear'</span>, <span class="st">'SubGroup2'</span>, <span class="st">'Adind'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>                              <span class="st">'CalYear'</span>, <span class="st">'SubGroup2'</span>, <span class="st">'Adind'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute claim frequency</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'claim_freq'</span>] <span class="op">=</span> df_process[<span class="st">'nclaims'</span>] <span class="op">/</span> (df_process[<span class="st">'Exppdays'</span>] <span class="op">/</span> <span class="dv">365</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Map 'Female' column to binary (0 = Male, 1 = Female) if it's stored as string</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'Female'</span>] <span class="op">=</span> df_process[<span class="st">'Female'</span>].<span class="bu">map</span>({<span class="st">'Male'</span>: <span class="dv">0</span>, <span class="st">'Female'</span>: <span class="dv">1</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="912f7a06" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute claim frequency</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'claim_freq'</span>] <span class="op">=</span> df_process[<span class="st">'nclaims'</span>] <span class="op">/</span> (df_process[<span class="st">'Exppdays'</span>] <span class="op">/</span> <span class="dv">365</span>)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Map 'Female' column to binary (0 = Male, 1 = Female) if it's stored as string</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'Female'</span>] <span class="op">=</span> df_process[<span class="st">'Female'</span>].<span class="bu">map</span>({<span class="st">'Male'</span>: <span class="dv">0</span>, <span class="st">'Female'</span>: <span class="dv">1</span>})</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort region order by male average claim frequency (Female == 0)</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>male_avg <span class="op">=</span> (</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    df_process[df_process[<span class="st">'Female'</span>] <span class="op">==</span> <span class="dv">0</span>]</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">'Region'</span>, observed<span class="op">=</span><span class="va">True</span>)[<span class="st">'claim_freq'</span>]</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    .mean()</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    .sort_values(ascending<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>region_order <span class="op">=</span> male_avg.index.tolist()</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-map back for legend clarity</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'Female'</span>] <span class="op">=</span> df_process[<span class="st">'Female'</span>].<span class="bu">map</span>({<span class="dv">0</span>: <span class="st">'Male'</span>, <span class="dv">1</span>: <span class="st">'Female'</span>})</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.5</span>))</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>sns.barplot(</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>df_process,</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">'Region'</span>,</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">'claim_freq'</span>,</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    hue<span class="op">=</span><span class="st">'Female'</span>,</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    order<span class="op">=</span>region_order,</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    errorbar<span class="op">=</span><span class="va">None</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Region"</span>)</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Average Claim Frequency"</span>)</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>plt.legend(title<span class="op">=</span><span class="st">"Gender"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Here we can see that the average claim frequency are different across different regions. This differences can possibly be reflected in the model output such that policyholder in region R may be predicted with a higher claim frequency.</p>
+<div id="cell-plot_male_region" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sort region order by male average claim frequency (Female == 0)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>male_avg <span class="op">=</span> (</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    df_process[df_process[<span class="st">'Female'</span>] <span class="op">==</span> <span class="dv">0</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">'Region'</span>, observed<span class="op">=</span><span class="va">True</span>)[<span class="st">'claim_freq'</span>]</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    .mean()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    .sort_values(ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>region_order <span class="op">=</span> male_avg.index.tolist()</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-map back for legend clarity</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'Female'</span>] <span class="op">=</span> df_process[<span class="st">'Female'</span>].<span class="bu">map</span>({<span class="dv">0</span>: <span class="st">'Male'</span>, <span class="dv">1</span>: <span class="st">'Female'</span>})</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.5</span>))</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>sns.barplot(</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>df_process,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    x<span class="op">=</span><span class="st">'Region'</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="st">'claim_freq'</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    hue<span class="op">=</span><span class="st">'Female'</span>,</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    order<span class="op">=</span>region_order,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    errorbar<span class="op">=</span><span class="va">None</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Region"</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Average Claim Frequency"</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>plt.legend(title<span class="op">=</span><span class="st">"Gender"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="jdcov_files/figure-html/cell-6-output-1.png" width="672" height="393" class="figure-img"></p>
+<p><img src="jdcov_files/figure-html/plot_male_region-output-1.png" id="plot_male_region" width="672" height="393" class="figure-img"></p>
 </figure>
 </div>
 </div>
 </div>
-<div id="5b655fd6" class="cell" data-execution_count="6">
+<p>Then we also look at the association between the two protected features. Here, we examine the proportion of each gender within each region, and the proportions appear similar across regions, suggesting little (or no) association between gender and region.</p>
+<div id="4780a720" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> pd.crosstab(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    df_process[<span class="st">'Region'</span>],         <span class="co"># rows</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    df_process[<span class="st">'Female'</span>],         <span class="co"># columns: 0 = Male, 1 = Female</span></span>
@@ -327,132 +357,143 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="7623fab0" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop([<span class="st">'claim_freq'</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'strat_key'</span>] <span class="op">=</span> df_process[<span class="st">'nclaims'</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> df_process[<span class="st">'Female'</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> df_process[<span class="st">'Region'</span>].astype(<span class="bu">str</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>One can also apply permutation tests to check whether the protected features are independent. We do not run this here because the dataset is large and the permutation test can take a long time to compute.</p>
+<div id="perm_test_independence" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Run permutation test using distance covariance. Note that the variables need to be</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># encoded into tensors before running the test.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>permtest_indep_jdcov_mem(Z1_train_tensor, Z2_train_tensor, n_bootstrap <span class="op">=</span> <span class="dv">1000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="800a66b4" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1220</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>train_data, test_data <span class="op">=</span> stratified_split_with_tolerance(df_process, <span class="st">'strat_key'</span>, tolerance<span class="op">=</span><span class="fl">0.0</span>, test_size<span class="op">=</span><span class="fl">0.2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="split-data" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Here we split the data into training data and testing data</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>df_process <span class="op">=</span> df_process.drop([<span class="st">'claim_freq'</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>df_process[<span class="st">'strat_key'</span>] <span class="op">=</span> df_process[<span class="st">'nclaims'</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> df_process[<span class="st">'Female'</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">'_'</span> <span class="op">+</span> df_process[<span class="st">'Region'</span>].astype(<span class="bu">str</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1220</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>train_data, test_data <span class="op">=</span> stratified_split_with_tolerance(df_process, <span class="st">'strat_key'</span>, tolerance<span class="op">=</span><span class="fl">0.0</span>, test_size<span class="op">=</span><span class="fl">0.2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="db60528d" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>train_data[<span class="st">'Exppdays'</span>] <span class="op">=</span> (train_data[<span class="st">'Exppdays'</span>]<span class="op">/</span><span class="dv">365</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> train_data.rename(columns <span class="op">=</span> {<span class="st">'Exppdays'</span>: <span class="st">'Exposure'</span>})</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>test_data[<span class="st">'Exppdays'</span>] <span class="op">=</span> (test_data[<span class="st">'Exppdays'</span>]<span class="op">/</span><span class="dv">365</span>)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> test_data.rename(columns <span class="op">=</span> {<span class="st">'Exppdays'</span>: <span class="st">'Exposure'</span>})</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<div id="create_tensors" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># this code chunk is used to create tensors for training the model</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>train_data[<span class="st">'Exppdays'</span>] <span class="op">=</span> (train_data[<span class="st">'Exppdays'</span>]<span class="op">/</span><span class="dv">365</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> train_data.rename(columns <span class="op">=</span> {<span class="st">'Exppdays'</span>: <span class="st">'Exposure'</span>})</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>test_data[<span class="st">'Exppdays'</span>] <span class="op">=</span> (test_data[<span class="st">'Exppdays'</span>]<span class="op">/</span><span class="dv">365</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> test_data.rename(columns <span class="op">=</span> {<span class="st">'Exppdays'</span>: <span class="st">'Exposure'</span>})</span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> train_data</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> test_data</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> train_data[<span class="st">'nclaims'</span>]</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> test_data[<span class="st">'nclaims'</span>]</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>offset_train <span class="op">=</span> train_data[<span class="st">'Exposure'</span>]</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>offset_test <span class="op">=</span> test_data[<span class="st">'Exposure'</span>]</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>X_train[<span class="st">'Female'</span>] <span class="op">=</span> pd.get_dummies(X_train[<span class="st">"Female"</span>])[<span class="st">'Female'</span>].astype(<span class="bu">int</span>)</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>X_test[<span class="st">'Female'</span>] <span class="op">=</span> pd.get_dummies(X_test[<span class="st">"Female"</span>])[<span class="st">'Female'</span>].astype(<span class="bu">int</span>)</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>X_train[<span class="st">'CarCat'</span>] <span class="op">=</span> X_train[<span class="st">'CarCat'</span>]<span class="op">\</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>                    .cat.rename_categories({<span class="st">'Small'</span>:<span class="dv">0</span>, <span class="st">'Medium'</span>:<span class="dv">1</span>, <span class="st">'Large'</span>:<span class="dv">2</span>})</span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>X_test[<span class="st">'CarCat'</span>] <span class="op">=</span> X_test[<span class="st">'CarCat'</span>]<span class="op">\</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                   .cat.rename_categories({<span class="st">'Small'</span>:<span class="dv">0</span>, <span class="st">'Medium'</span>:<span class="dv">1</span>, <span class="st">'Large'</span>:<span class="dv">2</span>})</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Column names for different preprocessor</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>scale_col <span class="op">=</span> [<span class="st">'Age'</span>, <span class="st">'Bonus'</span>, <span class="st">'Duration'</span>, <span class="st">'Value'</span>, <span class="st">'Density'</span>]</span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>onehot_col <span class="op">=</span> [<span class="st">'Region'</span>, <span class="st">'CarType'</span>, <span class="st">'Occupation'</span>,<span class="st">'CarGroup'</span>]</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting up preprocessor for preprocessing the data</span></span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>preprocessor <span class="op">=</span> ColumnTransformer(</span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    transformers<span class="op">=</span>[</span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'num'</span>, MinMaxScaler(feature_range<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)), scale_col),</span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'cat_onehot'</span>, OneHotEncoder(sparse_output<span class="op">=</span><span class="va">False</span>), onehot_col)</span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>    ],</span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    remainder<span class="op">=</span><span class="st">'passthrough'</span>  <span class="co"># Passthrough any columns not specified for transformation (e.g., already processed)</span></span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> preprocessor.fit_transform(X_train, y_train)</span>
-<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> preprocessor.transform(X_test)</span>
-<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>processed_columns <span class="op">=</span> scale_col <span class="op">+</span> <span class="op">\</span></span>
-<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">list</span>(preprocessor.named_transformers_[<span class="st">'cat_onehot'</span>].get_feature_names_out()) <span class="op">\</span></span>
-<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>                    <span class="op">+</span> [<span class="st">'Female'</span>] <span class="op">+</span> [<span class="st">'CarCat'</span>] <span class="op">+</span> [<span class="st">'Exposure'</span>] <span class="op">+</span> [<span class="st">'nclaims'</span>] <span class="op">+</span> [<span class="st">'strat_key'</span>]</span>
-<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> pd.DataFrame(X_train, columns<span class="op">=</span>processed_columns)</span>
-<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> pd.DataFrame(X_test, columns<span class="op">=</span>processed_columns)</span>
-<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstructing the transformed data into pandas dataset.</span></span>
-<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1220</span>)</span>
-<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>subtrain_data, valid_data <span class="op">=</span> stratified_split_with_tolerance(X_train, <span class="st">'strat_key'</span>, tolerance<span class="op">=</span><span class="fl">0.05</span>, test_size<span class="op">=</span><span class="fl">0.3</span>)</span>
-<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>X_subtrain <span class="op">=</span> subtrain_data.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
-<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>X_valid <span class="op">=</span> valid_data.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
-<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>y_subtrain <span class="op">=</span> subtrain_data[<span class="st">'nclaims'</span>]</span>
-<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>y_valid <span class="op">=</span> valid_data[<span class="st">'nclaims'</span>]</span>
-<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>offset_subtrain <span class="op">=</span> subtrain_data[<span class="st">'Exposure'</span>]</span>
-<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>offset_valid <span class="op">=</span> valid_data[<span class="st">'Exposure'</span>]</span>
-<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> train_data</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> test_data</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>y_train <span class="op">=</span> train_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> test_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>offset_train <span class="op">=</span> train_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>offset_test <span class="op">=</span> test_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>X_train[<span class="st">'Female'</span>] <span class="op">=</span> pd.get_dummies(X_train[<span class="st">"Female"</span>])[<span class="st">'Female'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>X_test[<span class="st">'Female'</span>] <span class="op">=</span> pd.get_dummies(X_test[<span class="st">"Female"</span>])[<span class="st">'Female'</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>X_train[<span class="st">'CarCat'</span>] <span class="op">=</span> X_train[<span class="st">'CarCat'</span>]<span class="op">\</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>                    .cat.rename_categories({<span class="st">'Small'</span>:<span class="dv">0</span>, <span class="st">'Medium'</span>:<span class="dv">1</span>, <span class="st">'Large'</span>:<span class="dv">2</span>})</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>X_test[<span class="st">'CarCat'</span>] <span class="op">=</span> X_test[<span class="st">'CarCat'</span>]<span class="op">\</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>                   .cat.rename_categories({<span class="st">'Small'</span>:<span class="dv">0</span>, <span class="st">'Medium'</span>:<span class="dv">1</span>, <span class="st">'Large'</span>:<span class="dv">2</span>})</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Column names for different preprocessor</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>scale_col <span class="op">=</span> [<span class="st">'Age'</span>, <span class="st">'Bonus'</span>, <span class="st">'Duration'</span>, <span class="st">'Value'</span>, <span class="st">'Density'</span>]</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>onehot_col <span class="op">=</span> [<span class="st">'Region'</span>, <span class="st">'CarType'</span>, <span class="st">'Occupation'</span>,<span class="st">'CarGroup'</span>]</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Setting up preprocessor for preprocessing the data</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>preprocessor <span class="op">=</span> ColumnTransformer(</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    transformers<span class="op">=</span>[</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'num'</span>, MinMaxScaler(feature_range<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">1</span>)), scale_col),</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>        (<span class="st">'cat_onehot'</span>, OneHotEncoder(sparse_output<span class="op">=</span><span class="va">False</span>), onehot_col)</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>    ],</span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>    remainder<span class="op">=</span><span class="st">'passthrough'</span>  <span class="co"># Passthrough any columns not specified for transformation (e.g., already processed)</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> preprocessor.fit_transform(X_train, y_train)</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> preprocessor.transform(X_test)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>processed_columns <span class="op">=</span> scale_col <span class="op">+</span> <span class="op">\</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>                    <span class="bu">list</span>(preprocessor.named_transformers_[<span class="st">'cat_onehot'</span>].get_feature_names_out()) <span class="op">\</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>                    <span class="op">+</span> [<span class="st">'Female'</span>] <span class="op">+</span> [<span class="st">'CarCat'</span>] <span class="op">+</span> [<span class="st">'Exposure'</span>] <span class="op">+</span> [<span class="st">'nclaims'</span>] <span class="op">+</span> [<span class="st">'strat_key'</span>]</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> pd.DataFrame(X_train, columns<span class="op">=</span>processed_columns)</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> pd.DataFrame(X_test, columns<span class="op">=</span>processed_columns)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Reconstructing the transformed data into pandas dataset.</span></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">1220</span>)</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>subtrain_data, valid_data <span class="op">=</span> stratified_split_with_tolerance(X_train, <span class="st">'strat_key'</span>, tolerance<span class="op">=</span><span class="fl">0.05</span>, test_size<span class="op">=</span><span class="fl">0.3</span>)</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>X_subtrain <span class="op">=</span> subtrain_data.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>X_valid <span class="op">=</span> valid_data.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>y_subtrain <span class="op">=</span> subtrain_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>y_valid <span class="op">=</span> valid_data[<span class="st">'nclaims'</span>]</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>offset_subtrain <span class="op">=</span> subtrain_data[<span class="st">'Exposure'</span>]</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>offset_valid <span class="op">=</span> valid_data[<span class="st">'Exposure'</span>]</span>
 <span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>strat_key <span class="op">=</span> X_train[<span class="st">'strat_key'</span>]</span>
-<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
-<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
-<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>Z1_train <span class="op">=</span> X_train[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
-<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
-<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>Z1_subtrain <span class="op">=</span> X_subtrain[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
-<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
-<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>Z1_valid <span class="op">=</span> X_valid[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
-<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
-<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>Z1_test <span class="op">=</span> X_test[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
-<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
-<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>                     </span>
-<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>Z2_train <span class="op">=</span> X_train[<span class="st">'Female'</span>]</span>
-<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>Z2_subtrain <span class="op">=</span> X_subtrain[<span class="st">'Female'</span>]</span>
-<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>Z2_valid <span class="op">=</span> X_valid[<span class="st">'Female'</span>]</span>
-<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>Z2_test <span class="op">=</span> X_test[<span class="st">'Female'</span>]</span>
-<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
-<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>X_subtrain <span class="op">=</span> X_subtrain.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
-<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>X_valid <span class="op">=</span> X_valid.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
-<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
-<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>strat_key <span class="op">=</span> X_train[<span class="st">'strat_key'</span>]</span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.drop([<span class="st">'Exposure'</span>, <span class="st">'nclaims'</span>,<span class="st">'strat_key'</span>], axis <span class="op">=</span> <span class="dv">1</span>)</span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>Z1_train <span class="op">=</span> X_train[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>Z1_subtrain <span class="op">=</span> X_subtrain[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>Z1_valid <span class="op">=</span> X_valid[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>Z1_test <span class="op">=</span> X_test[[<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>,</span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>                     <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>]]</span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>                     </span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>Z2_train <span class="op">=</span> X_train[<span class="st">'Female'</span>]</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>Z2_subtrain <span class="op">=</span> X_subtrain[<span class="st">'Female'</span>]</span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>Z2_valid <span class="op">=</span> X_valid[<span class="st">'Female'</span>]</span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>Z2_test <span class="op">=</span> X_test[<span class="st">'Female'</span>]</span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>X_train <span class="op">=</span> X_train.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>X_subtrain <span class="op">=</span> X_subtrain.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>X_valid <span class="op">=</span> X_valid.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>X_test <span class="op">=</span> X_test.drop([<span class="st">'Region_L'</span>,<span class="st">'Region_M'</span>, <span class="st">'Region_N'</span>, <span class="st">'Region_O'</span>, <span class="st">'Region_P'</span>, </span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a>                    <span class="st">'Region_Q'</span>, <span class="st">'Region_R'</span>, <span class="st">'Region_S'</span>, <span class="st">'Region_T'</span>, <span class="st">'Region_U'</span>,<span class="st">'Female'</span>],axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a>X_train_tensor <span class="op">=</span> torch.tensor(X_train.values.astype(np.float32))</span>
-<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>X_test_tensor <span class="op">=</span> torch.tensor(X_test.values.astype(np.float32))</span>
-<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>X_subtrain_tensor <span class="op">=</span> torch.tensor(X_subtrain.values.astype(np.float32))</span>
-<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>X_valid_tensor <span class="op">=</span> torch.tensor(X_valid.values.astype(np.float32))</span>
-<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a>y_train_tensor <span class="op">=</span> torch.tensor(y_train.values.astype(np.float32))</span>
-<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>y_test_tensor <span class="op">=</span> torch.tensor(y_test.values.astype(np.float32))</span>
-<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>y_subtrain_tensor <span class="op">=</span> torch.tensor(y_subtrain.values.astype(np.float32))</span>
-<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a>y_valid_tensor <span class="op">=</span> torch.tensor(y_valid.values.astype(np.float32))</span>
-<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a>offset_train_tensor <span class="op">=</span> torch.tensor(offset_train.values.astype(np.float32))</span>
-<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a>offset_test_tensor <span class="op">=</span> torch.tensor(offset_test.values.astype(np.float32))</span>
-<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>offset_subtrain_tensor <span class="op">=</span> torch.tensor(offset_subtrain.values.astype(np.float32))</span>
-<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>offset_valid_tensor <span class="op">=</span> torch.tensor(offset_valid.values.astype(np.float32))</span>
-<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>Z1_train_tensor <span class="op">=</span> torch.tensor(Z1_train.values.astype(np.float32))</span>
-<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>Z1_test_tensor <span class="op">=</span> torch.tensor(Z1_test.values.astype(np.float32))</span>
-<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>Z1_subtrain_tensor <span class="op">=</span> torch.tensor(Z1_subtrain.values.astype(np.float32))</span>
-<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>Z1_valid_tensor <span class="op">=</span> torch.tensor(Z1_valid.values.astype(np.float32))</span>
-<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a>Z2_train_tensor <span class="op">=</span> torch.tensor(Z2_train.values.astype(np.float32))</span>
-<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>Z2_test_tensor <span class="op">=</span> torch.tensor(Z2_test.values.astype(np.float32))</span>
-<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>Z2_subtrain_tensor <span class="op">=</span> torch.tensor(Z2_subtrain.values.astype(np.float32))</span>
-<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>Z2_valid_tensor <span class="op">=</span> torch.tensor(Z2_valid.values.astype(np.float32))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>X_train_tensor <span class="op">=</span> torch.tensor(X_train.values.astype(np.float32))</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>X_test_tensor <span class="op">=</span> torch.tensor(X_test.values.astype(np.float32))</span>
+<span id="cb9-89"><a href="#cb9-89" aria-hidden="true" tabindex="-1"></a>X_subtrain_tensor <span class="op">=</span> torch.tensor(X_subtrain.values.astype(np.float32))</span>
+<span id="cb9-90"><a href="#cb9-90" aria-hidden="true" tabindex="-1"></a>X_valid_tensor <span class="op">=</span> torch.tensor(X_valid.values.astype(np.float32))</span>
+<span id="cb9-91"><a href="#cb9-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-92"><a href="#cb9-92" aria-hidden="true" tabindex="-1"></a>y_train_tensor <span class="op">=</span> torch.tensor(y_train.values.astype(np.float32))</span>
+<span id="cb9-93"><a href="#cb9-93" aria-hidden="true" tabindex="-1"></a>y_test_tensor <span class="op">=</span> torch.tensor(y_test.values.astype(np.float32))</span>
+<span id="cb9-94"><a href="#cb9-94" aria-hidden="true" tabindex="-1"></a>y_subtrain_tensor <span class="op">=</span> torch.tensor(y_subtrain.values.astype(np.float32))</span>
+<span id="cb9-95"><a href="#cb9-95" aria-hidden="true" tabindex="-1"></a>y_valid_tensor <span class="op">=</span> torch.tensor(y_valid.values.astype(np.float32))</span>
+<span id="cb9-96"><a href="#cb9-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-97"><a href="#cb9-97" aria-hidden="true" tabindex="-1"></a>offset_train_tensor <span class="op">=</span> torch.tensor(offset_train.values.astype(np.float32))</span>
+<span id="cb9-98"><a href="#cb9-98" aria-hidden="true" tabindex="-1"></a>offset_test_tensor <span class="op">=</span> torch.tensor(offset_test.values.astype(np.float32))</span>
+<span id="cb9-99"><a href="#cb9-99" aria-hidden="true" tabindex="-1"></a>offset_subtrain_tensor <span class="op">=</span> torch.tensor(offset_subtrain.values.astype(np.float32))</span>
+<span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a>offset_valid_tensor <span class="op">=</span> torch.tensor(offset_valid.values.astype(np.float32))</span>
+<span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>Z1_train_tensor <span class="op">=</span> torch.tensor(Z1_train.values.astype(np.float32))</span>
+<span id="cb9-103"><a href="#cb9-103" aria-hidden="true" tabindex="-1"></a>Z1_test_tensor <span class="op">=</span> torch.tensor(Z1_test.values.astype(np.float32))</span>
+<span id="cb9-104"><a href="#cb9-104" aria-hidden="true" tabindex="-1"></a>Z1_subtrain_tensor <span class="op">=</span> torch.tensor(Z1_subtrain.values.astype(np.float32))</span>
+<span id="cb9-105"><a href="#cb9-105" aria-hidden="true" tabindex="-1"></a>Z1_valid_tensor <span class="op">=</span> torch.tensor(Z1_valid.values.astype(np.float32))</span>
+<span id="cb9-106"><a href="#cb9-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>Z2_train_tensor <span class="op">=</span> torch.tensor(Z2_train.values.astype(np.float32))</span>
+<span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>Z2_test_tensor <span class="op">=</span> torch.tensor(Z2_test.values.astype(np.float32))</span>
+<span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>Z2_subtrain_tensor <span class="op">=</span> torch.tensor(Z2_subtrain.values.astype(np.float32))</span>
+<span id="cb9-110"><a href="#cb9-110" aria-hidden="true" tabindex="-1"></a>Z2_valid_tensor <span class="op">=</span> torch.tensor(Z2_valid.values.astype(np.float32))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="ceed855e" class="cell" data-execution_count="10">
+</section>
+<section id="model-training" class="level2">
+<h2 class="anchored" data-anchor-id="model-training">Model training</h2>
+<p>Here we train the model using both CCdCov and JdCov.</p>
+<div id="8afef91c" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loading current best checkpoints</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>best_hp_pdev <span class="op">=</span> load_checkpoint(<span class="st">"checkpoint/best_checkpoint.pt"</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>best_hp_ccdcov <span class="op">=</span> load_checkpoint(<span class="st">"checkpoint_ccdcov/best_checkpoint.pt"</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>best_hp_jdcov <span class="op">=</span> load_checkpoint(<span class="st">"checkpoint_jdcov/best_checkpoint.pt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>best_hp_pdev <span class="op">=</span> load_checkpoint(<span class="st">"python/checkpoint/best_checkpoint.pt"</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>best_hp_ccdcov <span class="op">=</span> load_checkpoint(<span class="st">"python/checkpoint_ccdcov/best_checkpoint.pt"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>best_hp_jdcov <span class="op">=</span> load_checkpoint(<span class="st">"python/checkpoint_jdcov/best_checkpoint.pt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="48b07fef" class="cell" data-execution_count="11">
+<div id="b8cc832d" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>set_seed(<span class="dv">42</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>result_pdev_test <span class="op">=</span> fit_poisson_pg15(X_train_tensor, y_train_tensor,</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                        Z1_train_tensor, Z2_train_tensor, offset_train_tensor,</span>
@@ -477,7 +518,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass</code></pre>
 </div>
 </div>
-<div id="a4924ef3" class="cell" data-execution_count="12">
+</section>
+<section id="model-output" class="level2">
+<h2 class="anchored" data-anchor-id="model-output">Model output</h2>
+<p>We plot the model predictions by region and gender. As we can see, the predicted claim frequency varies much less than in the unregularised case. Through regularisation, we reduce disparity across subgroups by decreasing the values of the JdCov and CCDCov terms, which adjust the model predictions. In theory, this pushes the predictions to be mutually independent of both region and gender.</p>
+<div id="1e08dc1f" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'font.size'</span>: <span class="dv">13</span>,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'axes.titlesize'</span>: <span class="dv">15</span>,</span>
@@ -591,11 +636,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>We also applied a permutation test to the joint distance covariance between the model predictions and the protected features. The test is likely to be significant because the number of predictions is large, making it easier to detect statistically significant association.</p>
+<div id="d2da367f" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>permtest_indep_jdcov_mem(result_jdcov_test[<span class="st">'val_output'</span>], Z2_test_tensor, Z1_test_tensor, n_bootstrap<span class="op">=</span><span class="dv">500</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<pre><code>(tensor(7.8201e-05), np.float32(3.1763317e-05), tensor(0.0040))</code></pre>
+</div>
+</div>
+
 
 
 </section>
+</section>
 
-</main> <!-- /main -->
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-lee2025machine" class="csl-entry" role="listitem">
+Lee, Ho Ming, Katrien Antonio, Benjamin Avanzi, Lorenzo Marchi, and Rui Zhou. 2025. <span>“Machine Learning with Multitype Protected Attributes: Intersectional Fairness Through Regularisation.”</span> <em>arXiv Preprint arXiv:2509.08163</em>.
+</div>
+</div></section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

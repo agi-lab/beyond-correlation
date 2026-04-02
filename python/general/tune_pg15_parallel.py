@@ -16,13 +16,13 @@ from skopt import BayesSearchCV
 import sys, pathlib
 
 ROOT = Path.cwd()
-while ROOT != ROOT.parent and not (ROOT / "general").exists():
+while ROOT != ROOT.parent and not (ROOT/"python/general").exists():
     ROOT = ROOT.parent
 
-if not (ROOT / "general").exists():
+if not (ROOT / "python/general").exists():
     raise FileNotFoundError(f"Could not find 'general' folder starting from {Path.cwd()}")
 
-sys.path.insert(0, str(ROOT / "general"))
+sys.path.insert(0, str(ROOT/"python/general"))
 
 from NN import PoissonRegressor
 from dcovs import u_centered_dist, sq_dcov_unbiased, JdCov_sq_unbiased

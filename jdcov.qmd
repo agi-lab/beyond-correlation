@@ -11,9 +11,9 @@ editor_options:
   markdown:
     wrap: 72
 ---
-
-
 ```{python}
+#| label: load-packages
+
 # Utility libraries
 import pandas as pd
 import numpy as np
@@ -58,22 +58,31 @@ from scipy.stats.distributions import chi2
 ```
 
 ```{python}
+#| label: load defined functions
+
 # loading utility functions from /general
-%run general/dcovs.py
-%run general/dcovs_memeff.py
-%run general/utils.py
-%run general/metrics.py
-%run general/NN.py
-%run tune_pg15_parallel.py
+%run python/general/dcovs.py
+%run python/general/dcovs_memeff.py
+%run python/general/utils.py
+%run python/general/metrics.py
+%run python/general/NN.py
+%run python/general/tune_pg15_parallel.py
 ```
 
 # Illustrations using joint distance covariance/correlation
+To illustrate the use of joint distance covariance, we make use of the example in @lee2025machine. Here we focus on demographic parity for the output of a machine learning algorithm, where we aim for the model output to be independent of the protected features.
+
+## Exploratory data analysis
+First, we take a look at the data. We use the `pg15training` dataset available in the `CASdatasets` package in `R`, which contains French motor insurance data from 2015. In this dataset, we consider gender and residential region (which can be a proxy for ethnicity, race, etc.) as the protected features.
 ```{python}
-df_pg15 = pyreadr.read_r('data/pg15training.rda')
+#| label: read_data
+df_pg15 = pyreadr.read_r('python/data/pg15training.rda')
 df_pg15 = df_pg15['pg15training']
 ```
 
 ```{python}
+#| label: preprocess data
+
 df_process = df_pg15.copy(deep=True)
 
 df_process = df_process\
@@ -87,14 +96,16 @@ df_process.reset_index(inplace = True)
 df_process = df_process.drop('rownames', axis=1) # Removing index column
 df_process = df_process.drop(['Numtpbi', 'Indtppd', 'Indtpbi', 'PolNum',
                               'CalYear', 'SubGroup2', 'Adind'], axis = 1)
-```
 
-```{python}
 # Compute claim frequency
 df_process['claim_freq'] = df_process['nclaims'] / (df_process['Exppdays'] / 365)
 
 # Map 'Female' column to binary (0 = Male, 1 = Female) if it's stored as string
 df_process['Female'] = df_process['Female'].map({'Male': 0, 'Female': 1})
+```
+Here we can see that the average claim frequency are different across different regions. This differences can possibly be reflected in the model output such that policyholder in region R may be predicted with a higher claim frequency.
+```{python}
+#| label: plot_male_region
 
 # Sort region order by male average claim frequency (Female == 0)
 male_avg = (
@@ -125,7 +136,7 @@ plt.ylabel("Average Claim Frequency")
 plt.legend(title="Gender")
 ```
 
-
+Then we also look at the association between the two protected features. Here, we examine the proportion of each gender within each region, and the proportions appear similar across regions, suggesting little (or no) association between gender and region.
 ```{python}
 counts = pd.crosstab(
     df_process['Region'],         # rows
@@ -155,19 +166,32 @@ ax.axhline(mean_male, ls='--', c='black', lw=1.2,
 ax.legend()
 ```
 
-
+One can also apply permutation tests to check whether the protected features are independent. We do not run this here because the dataset is large and the permutation test can take a long time to compute.
 ```{python}
-df_process = df_process.drop(['claim_freq'], axis=1)
-df_process['strat_key'] = df_process['nclaims'].astype(str) + '_' + df_process['Female'].astype(str) + '_' + df_process['Region'].astype(str)
+#| label: perm_test_independence
+#| eval: false
+
+# Run permutation test using distance covariance. Note that the variables need to be
+# encoded into tensors before running the test.
+permtest_indep_jdcov_mem(Z1_train_tensor, Z2_train_tensor, n_bootstrap = 1000)
 ```
 
 ```{python}
+#| label: split data
+
+# Here we split the data into training data and testing data
+df_process = df_process.drop(['claim_freq'], axis=1)
+df_process['strat_key'] = df_process['nclaims'].astype(str) + '_' + df_process['Female'].astype(str) + '_' + df_process['Region'].astype(str)
+
 np.random.seed(1220)
 train_data, test_data = stratified_split_with_tolerance(df_process, 'strat_key', tolerance=0.0, test_size=0.2)
 ```
 
 
 ```{python}
+#| label: create_tensors
+
+# this code chunk is used to create tensors for training the model
 train_data['Exppdays'] = (train_data['Exppdays']/365)
 train_data = train_data.rename(columns = {'Exppdays': 'Exposure'})
 test_data['Exppdays'] = (test_data['Exppdays']/365)
@@ -279,12 +303,13 @@ Z2_subtrain_tensor = torch.tensor(Z2_subtrain.values.astype(np.float32))
 Z2_valid_tensor = torch.tensor(Z2_valid.values.astype(np.float32))
 ```
 
-
+## Model training
+Here we train the model using both CCdCov and JdCov.
 ```{python}
 # loading current best checkpoints
-best_hp_pdev = load_checkpoint("checkpoint/best_checkpoint.pt")
-best_hp_ccdcov = load_checkpoint("checkpoint_ccdcov/best_checkpoint.pt")
-best_hp_jdcov = load_checkpoint("checkpoint_jdcov/best_checkpoint.pt")
+best_hp_pdev = load_checkpoint("python/checkpoint/best_checkpoint.pt")
+best_hp_ccdcov = load_checkpoint("python/checkpoint_ccdcov/best_checkpoint.pt")
+best_hp_jdcov = load_checkpoint("python/checkpoint_jdcov/best_checkpoint.pt")
 ```
 
 ```{python}
@@ -309,7 +334,8 @@ result_jdcov_test = fit_poisson_pg15(X_train_tensor, y_train_tensor,
                         reg_type = "jdcov")
 ```
 
-
+## Model output
+We plot the model predictions by region and gender. As we can see, the predicted claim frequency varies much less than in the unregularised case. Through regularisation, we reduce disparity across subgroups by decreasing the values of the JdCov and CCDCov terms, which adjust the model predictions. In theory, this pushes the predictions to be mutually independent of both region and gender.
 ```{python}
 plt.rcParams.update({
     'font.size': 13,
@@ -416,4 +442,9 @@ for ax in axes[1]:                           # CDF row
 
 
 plt.tight_layout(rect=[0.06, 0, 0.85, 1])
+```
+
+We also applied a permutation test to the joint distance covariance between the model predictions and the protected features. The test is likely to be significant because the number of predictions is large, making it easier to detect statistically significant association.
+```{python}
+permtest_indep_jdcov_mem(result_jdcov_test['val_output'], Z2_test_tensor, Z1_test_tensor, n_bootstrap=500)
 ```
