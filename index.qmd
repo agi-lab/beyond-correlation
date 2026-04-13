@@ -40,6 +40,7 @@ library(latex2exp)
 library(pdist)
 library(quantmod)
 library(tseries)
+library(rugarch)
 library(vars)
 library(urca)
 library(HellCor)
@@ -175,6 +176,8 @@ boxplot(log(multi_line_dat[, c("X1","X2","X3","Y")]),
 Then, we apply bivariate analysis. First, we plot the scatter plots for each pair of the variables using their ranks. Here ranks are used to reveal the dependence structure between the pairs.
 ```{r, multi_line_cross_plot}
 # plot the scatterplots on the ranks for each claim variable
+# png("cross_pair_multiline_rank.png", width = 900, height = 900, res = 450)
+
 par(mfrow = c(2,2))
 col_group <- ifelse(R == 1, "red", "blue")
 plot(rank(multi_line_dat$X1), rank(multi_line_dat$Y), pch = 16, cex = 0.35,
@@ -186,12 +189,13 @@ plot(rank(multi_line_dat$X2), rank(multi_line_dat$Y), pch = 16, cex = 0.35,
      main = "Medical claim (Y) vs bodily injury (X2)")
 
 plot(rank(multi_line_dat$X2), rank(multi_line_dat$X3), pch = 16, cex = 0.35,
-     xlab = "Rank of X2", ylab = "Rank of X3",
-     main = "Bodily injury (X2) vs vehicle damage (X2)")
+     xlab = "Rank of X2", ylab = "Rank of X1",
+     main = "Vehicle damage (X1) vs bodily injury (X2)")
 
 plot(rank(multi_line_dat$X3), rank(multi_line_dat$Y), pch = 16, cex = 0.35,
      col = col_group, xlab = "Rank of X1", ylab = "Rank of Y",
      main = "Medical claim (Y) vs claims handling (X3)")
+dev.off()
 ```
 The correlation and the corresponding $p$-value matrices are given by below:
 ```{r, corr_p_helper_function}
@@ -715,7 +719,7 @@ birthdeath_hellCor$p.value # p-value with H_0: HellCor = 0
 ```
 
 ### Multi-line example
-```{r, multi_line_hellcor, eval = FALSE}
+```{r, multi_line_hellcor}
 vars <- c("X1", "X2", "X3", "Y")
 
 # compute Hellinger correlaiton for each pair of the claim variables
@@ -793,8 +797,8 @@ p <- ggplot(plot_df, aes(x = s)) +
   scale_colour_manual(
     values = c("joint" = "#1f77b4", "product" = "#d62728"),
     labels = c(
-      "joint"   = TeX(r'($\phi_{XY}(s,1)$)'),
-      "product" = TeX(r'($\phi_X(s)\phi_Y(1)$)')
+      "joint"   = TeX(r'($\varphi_{XY}(s,1)$)'),
+      "product" = TeX(r'($\varphi_X(s)\phi_Y(1)$)')
     ),
     name = NULL
   ) +
@@ -905,6 +909,37 @@ When we look at the ADCF, we detect the non-linear serial dependence with the mo
 # plot the auto-distance correlation of the S&P500 monthly log returns
 dCovTS::ADCFplot(ret, ylim = c(0,0.2), MaxLag = 36, 
                  main = expression("ADCF of monthly log returns " ~ r[t]))
+```
+
+Next, we fit a GARCH(1,1) model to the S\&P500 monthly log return and check the ADCF for the (squared) standardised residuals.
+```{r}
+# GARCH(1,1), which is a benchmark model in  Awartani and Corradi (2005)
+
+# standard GARCH
+garch11 <- rugarch::ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+  mean.model     = list(armaOrder = c(0, 0), include.mean = TRUE),
+  distribution.model = "std"
+)
+
+fit_garch11 <- ugarchfit(
+  spec = garch11,
+  data = ret,
+  solver = "hybrid",
+  fit.control = list(scale = 1)
+)
+
+show(fit_garch11)
+
+# standardized residuals
+z11 <- residuals(fit_garch11, standardize = TRUE)
+
+par(mfrow = c(1,2))
+# ADCF diagnostics
+dCovTS::ADCFplot(as.numeric(z11), MaxLag = 36, 
+                 main = "ADCF for standardised residuals")
+dCovTS::ADCFplot(as.numeric(z11)^2, MaxLag = 36,
+                 main = "ADCF for squared standardised residuals")
 ```
 
 ### Los Angeles County mortality data
