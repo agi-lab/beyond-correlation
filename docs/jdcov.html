@@ -148,6 +148,10 @@ div.csl-indent {
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
     <a class="nav-link" href="./index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./r_illust.html"> 
 <span class="menu-text">R</span></a>
   </li>  
   <li class="nav-item">
@@ -174,7 +178,10 @@ div.csl-indent {
   <ul class="collapse">
   <li><a href="#exploratory-data-analysis" id="toc-exploratory-data-analysis" class="nav-link" data-scroll-target="#exploratory-data-analysis">Exploratory data analysis</a></li>
   <li><a href="#model-training" id="toc-model-training" class="nav-link" data-scroll-target="#model-training">Model training</a></li>
-  <li><a href="#model-output" id="toc-model-output" class="nav-link" data-scroll-target="#model-output">Model output</a></li>
+  <li><a href="#model-output" id="toc-model-output" class="nav-link" data-scroll-target="#model-output">Model output</a>
+  <ul class="collapse">
+  <li><a href="#figure-4.2" id="toc-figure-4.2" class="nav-link" data-scroll-target="#figure-4.2">Figure 4.2</a></li>
+  </ul></li>
   </ul></li>
   </ul>
 </nav>
@@ -322,7 +329,7 @@ div.csl-indent {
 </div>
 </div>
 <p>Then we also look at the association between the two protected features. Here, we examine the proportion of each gender within each region, and the proportions appear similar across regions, suggesting little (or no) association between gender and region.</p>
-<div id="43009b08" class="cell" data-execution_count="6">
+<div id="a6b0e6f8" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> pd.crosstab(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    df_process[<span class="st">'Region'</span>],         <span class="co"># rows</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    df_process[<span class="st">'Female'</span>],         <span class="co"># columns: 0 = Male, 1 = Female</span></span>
@@ -487,13 +494,13 @@ div.csl-indent {
 <section id="model-training" class="level2">
 <h2 class="anchored" data-anchor-id="model-training">Model training</h2>
 <p>Here we train the model using both CCdCov and JdCov.</p>
-<div id="530515ff" class="cell" data-execution_count="10">
+<div id="a636005b" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># loading current best checkpoints</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>best_hp_pdev <span class="op">=</span> load_checkpoint(<span class="st">"python/checkpoint/best_checkpoint.pt"</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>best_hp_ccdcov <span class="op">=</span> load_checkpoint(<span class="st">"python/checkpoint_ccdcov/best_checkpoint.pt"</span>)</span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>best_hp_jdcov <span class="op">=</span> load_checkpoint(<span class="st">"python/checkpoint_jdcov/best_checkpoint.pt"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="7b39f759" class="cell" data-execution_count="11">
+<div id="1d5e0109" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>set_seed(<span class="dv">42</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>result_pdev_test <span class="op">=</span> fit_poisson_pg15(X_train_tensor, y_train_tensor,</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>                        Z1_train_tensor, Z2_train_tensor, offset_train_tensor,</span>
@@ -522,7 +529,9 @@ div.csl-indent {
 <section id="model-output" class="level2">
 <h2 class="anchored" data-anchor-id="model-output">Model output</h2>
 <p>We plot the model predictions by region and gender. As we can see, the predicted claim frequency varies much less than in the unregularised case. Through regularisation, we reduce disparity across subgroups by decreasing the values of the JdCov and CCDCov terms, which adjust the model predictions. In theory, this pushes the predictions to be mutually independent of both region and gender.</p>
-<div id="84ad1d93" class="cell" data-execution_count="12">
+<section id="figure-4.2" class="level3 unnumbered">
+<h3 class="unnumbered anchored" data-anchor-id="figure-4.2">Figure 4.2</h3>
+<div id="4954eb57" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">'font.size'</span>: <span class="dv">13</span>,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">'axes.titlesize'</span>: <span class="dv">15</span>,</span>
@@ -637,15 +646,13 @@ div.csl-indent {
 </div>
 </div>
 <p>We also applied a permutation test to the joint distance covariance between the model predictions and the protected features. The test is likely to be significant because the number of predictions is large, making it easier to detect statistically significant association.</p>
-<div id="edfdd673" class="cell" data-execution_count="13">
+<div id="210a85ad" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>permtest_indep_jdcov_mem(result_jdcov_test[<span class="st">'val_output'</span>], Z2_test_tensor, Z1_test_tensor, n_bootstrap<span class="op">=</span><span class="dv">500</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="12">
-<pre><code>(tensor(7.8201e-05), np.float32(3.1763317e-05), tensor(0.0040))</code></pre>
-</div>
 </div>
 
 
 
+</section>
 </section>
 </section>
 

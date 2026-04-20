@@ -336,6 +336,8 @@ result_jdcov_test = fit_poisson_pg15(X_train_tensor, y_train_tensor,
 
 ## Model output
 We plot the model predictions by region and gender. As we can see, the predicted claim frequency varies much less than in the unregularised case. Through regularisation, we reduce disparity across subgroups by decreasing the values of the JdCov and CCDCov terms, which adjust the model predictions. In theory, this pushes the predictions to be mutually independent of both region and gender.
+
+### Figure 4.2 {.unnumbered }
 ```{python}
 plt.rcParams.update({
     'font.size': 13,
@@ -446,5 +448,6 @@ plt.tight_layout(rect=[0.06, 0, 0.85, 1])
 
 We also applied a permutation test to the joint distance covariance between the model predictions and the protected features. The test is likely to be significant because the number of predictions is large, making it easier to detect statistically significant association.
 ```{python}
+#| eval: false
 permtest_indep_jdcov_mem(result_jdcov_test['val_output'], Z2_test_tensor, Z1_test_tensor, n_bootstrap=500)
 ```
