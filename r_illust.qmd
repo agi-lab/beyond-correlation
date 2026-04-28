@@ -29,10 +29,6 @@ library(vars)
 library(urca)
 library(HellCor)
 ```
-
-# Introduction
-This is the code for the paper "Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics" by Benjamin Avanzi, Guillaume Boglioni Beaulieu, Pierre Lafaye de Micheaux, Ho Ming Lee, Bernard Wong, and Rui Zhou.
-
 # Motivating examples
 This section provide the codes for generating the figures and statistics in the introduction of the paper, as well as the data generation process for simulated data.
 
