@@ -32,12 +32,26 @@ The dataset used in this paper are:
   data(MortTempPart)
   ```
 
-## Running the demonstration locally
-For those interested in running the code themselves, the main files are [`r_illust.qmd`](r_illust.qmd) and [`jdcov.qmd`](jdcov.qmd). The file [`r_illust.qmd`](r_illust.qmd) is written in `R` and contains the illustrations for the [Hellinger correlation](https://www.tandfonline.com/doi/epdf/10.1080/01621459.2020.1791132), [distance covariance](https://projecteuclid.org/journals/annals-of-applied-statistics/volume-3/issue-4/Brownian-distance-covariance/10.1214/09-AOAS312.full), and the [auto-distance correlation function](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1467-9892.2011.00780.x).
+## Running the demonstrations locally
+For those interested in running the code themselves, the main files are [`r_illust.qmd`](r_illust.qmd) and [`jdcov.qmd`](jdcov.qmd). The file [`r_illust.qmd`](r_illust.qmd) is written in `R` and contains the illustrations for the [Hellinger correlation](https://www.tandfonline.com/doi/epdf/10.1080/01621459.2020.1791132) (Geenens and Lafaye de Micheaux, 2022), [distance covariance](https://projecteuclid.org/journals/annals-of-applied-statistics/volume-3/issue-4/Brownian-distance-covariance/10.1214/09-AOAS312.full) (Székely and Rizzo, 2009), and the [auto-distance correlation function](https://onlinelibrary.wiley.com/doi/abs/10.1111/j.1467-9892.2011.00780.x) (Zhou, 2012).
 
-For the [joint distance covariance](https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1513364), you can run [`jdcov.qmd`](jdcov.qmd), which is written in Python. The code was executed in Quarto with Python 3.14.3. Required packages are listed in [`requirements.txt`](/python/requirements.txt) and can be installed with
+For the [joint distance covariance](https://www.tandfonline.com/doi/full/10.1080/01621459.2018.1513364) (Chakraborty & Zhang, 2019), you can run [`jdcov.qmd`](jdcov.qmd), which is written in Python. The code was executed in Quarto with Python 3.14.3. Required packages are listed in [`requirements.txt`](/python/requirements.txt) and can be installed with
 ```bash
 pip install -r requirements.txt
 ```
 
 ## References
+
+Central Intelligence Agency. (2020). The world factbook.
+
+Chakraborty, S., & Zhang, X. (2019). Distance metrics for measuring joint dependence with application to causal inference. Journal of the American Statistical Association, 114(528), 1638–1650. https://doi.org/10.1080/01621459.2018.1513364
+
+Dutang, C., & Charpentier, A. (2026). CASdatasets: Insurance datasets [R package version 1.2-1]. https://doi.org/10.57745/P0KHAG
+
+Geenens, G., & Lafaye de Micheaux, P. (2022). The Hellinger correlation. Journal of the American Statistical Association, 117(538), 639–653. https://doi.org/10.1080/01621459.2020.1791132
+
+Shumway, R. H., Azari, A. S., & Pawitan, Y. (1988). Modeling mortality fluctuations in Los Angeles as functions of pollution and weather effects. Environmental Research, 45(2), 224–241. https://doi.org/10.1016/S0013-9351(88)80049-5
+
+Székely, G. J., & Rizzo, M. L. (2009). Brownian distance covariance. The Annals of Applied Statistics, 3(4), 1236–1265. https://doi.org/10.1214/09-AOAS312
+
+Zhou, Z. (2012). Measuring nonlinear dependence in time-series, a distance correlation approach. Journal of Time Series Analysis, 33(3), 438–457. https://doi.org/10.1111/j.1467-9892.2011.00780.x
