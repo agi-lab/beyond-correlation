@@ -2,7 +2,7 @@
 By Benjamin Avanzi, Guillaume Boglioni Beaulieu, Pierre Lafaye de Micheaux, Ho Ming Lee, Bernard Wong, and Rui Zhou.
 
 ## Introduction
-This repository contains the code for the paper *Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics*, submitted to the [2026 All Actuaries Summit](https://www.actuaries.asn.au/all-actuaries-summit-2026). The paper aims to introduce distance-based dependence statistics for testing and modelling dependence structures between random variables and/or random vectors, as complementary tools to the correlation coefficient. We illustrate these statistics using a range of real-world and synthetic datasets. A link to the paper will be provided once it is finalised and uploaded to arXiv.
+This repository contains the code for the paper *Beyond pairwise correlation: capturing nonlinear and higher-order dependence with distance statistics*, submitted to the [2026 All Actuaries Summit](https://www.actuaries.asn.au/all-actuaries-summit-2026). The paper aims to introduce distance-based dependence statistics for testing and modelling dependence structures between random variables and/or random vectors, as complementary tools to the correlation coefficient. We illustrate these statistics using a range of real-world and synthetic datasets. The paper can be found [here](https://content.actuaries.asn.au/resources/resource-ce6yyqn64sx3-786882053-16726).
 
 The code for visualising the motivating examples, together with illustrations of the computation of the distance-based dependence statistics, is available [here](https://agi-lab.github.io/beyond-correlation/).
 
