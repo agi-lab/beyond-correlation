@@ -15,6 +15,7 @@ The dataset used in this paper are:
   library(HellCor)
   data("worlddemographics")
   ```
+- [Multi-line insurance data](/data/multi_line_dat.csv): This dataset is a synthetic dataset generated to illustrate the pitfalls of correlation. It represents an insurance portfolio with two lines of business: motor insurance, with three components (vehicle repair cost, bodily injury liability, and claims handling cost), and another line containing medical claim cost. Details of the data generation can be found [on this page](https://agi-lab.github.io/beyond-correlation/).
 - [pg15training](/data/pg15training.rda) (Dutang & Charpentier, 2026): This dataset contains 100,000 third-party liability policies for a private motor insurance product in France. It is one of the datasets in the `R` package `CASdatasets`.
   ```bash
   library(CASdatasets)
