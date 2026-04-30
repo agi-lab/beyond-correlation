@@ -20,11 +20,16 @@ The dataset used in this paper are:
   library(CASdatasets)
   data("pg15training")
   ```
-- [S&P-500 data](/data/sp500_monthly_log_return.csv): This dataset contains the monthly stock returns downloaded from Yahoo Finance over the period 1926-01-01 to 2026-03-20. It was downloaded using the following code in `R`:
+- [S&P-500 data](/data/sp500_monthly_log_returns.csv): This dataset contains the monthly stock returns downloaded from Yahoo Finance over the period 1926-01-01 to 2026-03-20. It was downloaded using the following code in `R`:
   ```bash
   getSymbols("^GSPC", src = "yahoo", from = "1926-01-01")
   price <- Cl(GSPC)
   ret <- monthlyReturn(price, type = "log")
+  ```
+- [LA mortality data](/data/MortTempPart.csv) (Shumway et al., 1988): This dataset contains weekly data on cardiovascular mortality, temperature, and pollutant particulates for Los Angeles County over the period 1970--1979. It can be downloaded in `R` using the following code:
+  ```bash
+  library(dCovTS)
+  data(MortTempPart)
   ```
 
 ## Running the demonstration locally
@@ -34,3 +39,5 @@ For the [joint distance covariance](https://www.tandfonline.com/doi/full/10.1080
 ```bash
 pip install -r requirements.txt
 ```
+
+## References
